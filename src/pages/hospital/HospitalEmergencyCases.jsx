@@ -1,10 +1,12 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { Siren, Clock, MapPin, Phone, CheckCircle, AlertTriangle } from 'lucide-react';
+import { Siren, Clock, MapPin, Phone, CheckCircle, AlertTriangle, Loader2 } from 'lucide-react';
 import { useSelector } from 'react-redux';
 import { Badge } from '../../components/common/Badge';
 import { Button } from '../../components/common/Button';
 import { Card } from '../../components/common/Card';
+import RedConnectMap from '../../components/map/RedConnectMap';
+import { getAvailableDonors, getHospitals, getActiveBloodRequests } from '../../services/firestoreDataService';
 import toast from 'react-hot-toast';
 
 const priorityConfig = {
@@ -15,6 +17,32 @@ const priorityConfig = {
 
 const HospitalEmergencyCases = () => {
   const { emergencyCases, donorResponses } = useSelector((s) => s.hospital);
+
+  const [donors, setDonors] = useState([]);
+  const [hospitals, setHospitals] = useState([]);
+  const [requests, setRequests] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const load = async () => {
+      setLoading(true);
+      try {
+        const [d, h, r] = await Promise.all([
+          getAvailableDonors(),
+          getHospitals(),
+          getActiveBloodRequests(),
+        ]);
+        setDonors(d);
+        setHospitals(h);
+        setRequests(r);
+      } catch (err) {
+        console.error('[HospitalEmergencyCases] Load failed:', err);
+      } finally {
+        setLoading(false);
+      }
+    };
+    load();
+  }, []);
 
   return (
     <div className="space-y-6">
@@ -92,17 +120,20 @@ const HospitalEmergencyCases = () => {
         })}
       </div>
 
-      {/* Map Placeholder */}
-      <div className="relative h-72 rounded-2xl overflow-hidden bg-slate-900 border border-slate-700 shadow-xl flex items-center justify-center">
-        <div className="absolute inset-0 opacity-10" style={{ backgroundImage: 'linear-gradient(#EF4444 1px, transparent 1px), linear-gradient(90deg, #EF4444 1px, transparent 1px)', backgroundSize: '30px 30px' }} />
-        <div className="relative z-10 text-center max-w-sm bg-slate-900/80 backdrop-blur-sm p-6 rounded-2xl border border-slate-700">
-          <MapPin className="w-10 h-10 text-primary mx-auto mb-3 animate-bounce" />
-          <p className="text-white font-bold">Real-Time Emergency Map</p>
-          <p className="text-slate-400 text-xs mt-1">Google Maps / Mapbox integration shows live case pins, nearby donors, and route ETAs in production.</p>
-          <Button variant="emergency" size="sm" className="mt-4" onClick={() => toast.success('Opening navigation — production feature')}>
-            Open Full Map View
-          </Button>
-        </div>
+      {/* Interactive Emergency Map */}
+      <div className="relative h-80 rounded-2xl overflow-hidden bg-slate-900 border border-slate-700 shadow-xl">
+        {loading ? (
+          <div className="w-full h-full flex items-center justify-center">
+            <Loader2 className="w-8 h-8 animate-spin text-red-500" />
+          </div>
+        ) : (
+          <RedConnectMap
+            donors={donors}
+            hospitals={hospitals}
+            requests={requests}
+            className="w-full h-full"
+          />
+        )}
       </div>
     </div>
   );

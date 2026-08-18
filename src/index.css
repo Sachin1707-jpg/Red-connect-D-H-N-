@@ -66,3 +66,45 @@
 .animate-heart-pulse {
   animation: heartPulse 1.8s infinite ease-in-out;
 }
+
+/* ─── Leaflet map overrides ────────────────────────────────────────────── */
+
+/* Critical request markers pulse to draw attention */
+.leaflet-request-critical {
+  animation: criticalPulse 1.2s infinite ease-in-out;
+}
+
+@keyframes criticalPulse {
+  0%, 100% { transform: scale(1) translateY(0); filter: drop-shadow(0 4px 8px rgba(220,38,38,0.5)); }
+  50%       { transform: scale(1.15) translateY(-2px); filter: drop-shadow(0 6px 14px rgba(220,38,38,0.7)); }
+}
+
+/* Prevent Tailwind preflight from stripping Leaflet popup styles */
+.leaflet-popup-content-wrapper {
+  border-radius: 16px !important;
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.15) !important;
+  padding: 0 !important;
+  overflow: hidden;
+}
+
+.leaflet-popup-content {
+  margin: 0 !important;
+}
+
+.leaflet-popup-tip-container {
+  margin-top: -1px;
+}
+
+/* Ensure Leaflet controls sit above other UI */
+.leaflet-control-zoom {
+  border: none !important;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.15) !important;
+}
+
+.leaflet-control-zoom a {
+  border-radius: 8px !important;
+  border: none !important;
+  font-size: 16px !important;
+  color: #374151 !important;
+}
+

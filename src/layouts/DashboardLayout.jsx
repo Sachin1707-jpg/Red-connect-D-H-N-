@@ -8,6 +8,7 @@ import { BackToTop } from '../components/ui/BackToTop';
 import { CommandPalette } from '../components/ui/CommandPalette';
 import { Breadcrumb } from '../components/ui/Breadcrumb';
 import { FirstVisitWelcomeModal } from '../components/common/FirstVisitWelcomeModal';
+import { EmergencyNotificationBanner } from '../components/ui/EmergencyNotificationBanner';
 import { Toaster } from 'react-hot-toast';
 
 export const DashboardLayout = () => {
@@ -30,6 +31,7 @@ export const DashboardLayout = () => {
       </div>
 
       <FirstVisitWelcomeModal />
+      <EmergencyNotificationBanner />
       <FloatingEmergencyButton />
       <BackToTop />
       <CommandPalette />
@@ -40,3 +42,4 @@ export const DashboardLayout = () => {
     </div>
   );
 };
+

@@ -50,6 +50,8 @@ export const mockHospitals = [
     distanceKm: 2.4,
     phone: "+1-555-8832",
     address: "450 Health Ave",
+    latitude: 28.6139,
+    longitude: 77.2090,
     availableUnits: { "A+": 12, "A-": 2, "B+": 18, "B-": 3, "AB+": 6, "AB-": 1, "O+": 25, "O-": 2 },
     rating: 4.8
   },
@@ -60,6 +62,8 @@ export const mockHospitals = [
     distanceKm: 5.1,
     phone: "+1-555-0341",
     address: "88 Pediatric Lane",
+    latitude: 28.5672,
+    longitude: 77.2100,
     availableUnits: { "A+": 8, "A-": 0, "B+": 15, "B-": 2, "AB+": 4, "AB-": 0, "O+": 19, "O-": 1 },
     rating: 4.9
   },
@@ -70,12 +74,35 @@ export const mockHospitals = [
     distanceKm: 7.8,
     phone: "+1-555-7711",
     address: "1200 Care Blvd",
+    latitude: 28.6304,
+    longitude: 77.3723,
     availableUnits: { "A+": 20, "A-": 5, "B+": 30, "B-": 4, "AB+": 10, "AB-": 2, "O+": 40, "O-": 6 },
     rating: 4.7
   }
 ];
 
 export const mockBloodRequests = [
+  {
+    id: "REQ001",
+    patientName: "Emergency Patient (Trauma Ward)",
+    hospitalName: "AIIMS",
+    hospitalId: "hosp_aiims",
+    bloodGroup: "O+",
+    unitsRequired: 2,
+    unitsPledged: 0,
+    priority: "Critical",
+    urgency: "Critical",
+    requiredDate: "2026-08-18",
+    location: "Ansari Nagar, New Delhi",
+    latitude: 28.5672,
+    longitude: 77.2100,
+    distanceKm: 2.0,
+    hospitalContact: "+91-11-26588500",
+    description: "Critical O+ blood required for emergency trauma patient at AIIMS.",
+    documentUrl: "#",
+    status: "Active",
+    createdAt: "2026-08-18T12:00:00Z"
+  },
   {
     id: "req_001",
     patientName: "Robert Chen (ICU Ward Bed 12)",
@@ -88,6 +115,8 @@ export const mockBloodRequests = [
     urgency: "Critical",
     requiredDate: "2026-07-22",
     location: "Metropolis Central",
+    latitude: 28.6139,
+    longitude: 77.2090,
     distanceKm: 2.4,
     hospitalContact: "+1-555-8832",
     description: "Urgent O-Negative blood required for acute trauma surgery following major motor accident. Immediate donors requested.",
@@ -107,6 +136,8 @@ export const mockBloodRequests = [
     urgency: "High",
     requiredDate: "2026-07-23",
     location: "North Metropolis",
+    latitude: 28.5672,
+    longitude: 77.2100,
     distanceKm: 5.1,
     hospitalContact: "+1-555-0341",
     description: "Patient undergoing urgent chemotherapy session requiring rare AB-Negative blood unit transfusion.",
@@ -126,6 +157,8 @@ export const mockBloodRequests = [
     urgency: "Medium",
     requiredDate: "2026-07-21",
     location: "East Metropolis",
+    latitude: 28.6304,
+    longitude: 77.3723,
     distanceKm: 7.8,
     hospitalContact: "+1-555-7711",
     description: "Elective orthopedic hip replacement surgery scheduled.",
@@ -145,6 +178,8 @@ export const mockBloodRequests = [
     urgency: "Critical",
     requiredDate: "2026-07-22",
     location: "Metropolis Central",
+    latitude: 28.6200,
+    longitude: 77.2150,
     distanceKm: 2.4,
     hospitalContact: "+1-555-8832",
     description: "B-Negative units required for emergency bypass surgery.",
@@ -286,11 +321,21 @@ export const mockNotifications = [
 ];
 
 export const mockNearbyDonors = [
-  { id: "don_1", name: "Alex Vance", bloodGroup: "O-", distanceKm: 1.2, isAvailable: true, phone: "+1-555-0011" },
-  { id: "don_2", name: "Jessica Taylor", bloodGroup: "O-", distanceKm: 2.8, isAvailable: true, phone: "+1-555-0022" },
-  { id: "don_3", name: "Brian Lawson", bloodGroup: "A+", distanceKm: 3.4, isAvailable: true, phone: "+1-555-0033" },
-  { id: "don_4", name: "Chloe Bennett", bloodGroup: "AB-", distanceKm: 4.1, isAvailable: false, phone: "+1-555-0044" }
+  { id: "D001", name: "Donor A",             bloodGroup: "O+",  isAvailable: true,  available: true,  latitude: 28.5800, longitude: 77.2200, phone: "+91-98765-00001" },
+  { id: "D002", name: "Donor B",             bloodGroup: "O+",  isAvailable: true,  available: true,  latitude: 28.5900, longitude: 77.2300, phone: "+91-98765-00002" },
+  { id: "D003", name: "Donor C",             bloodGroup: "O+",  isAvailable: true,  available: true,  latitude: 28.6000, longitude: 77.2400, phone: "+91-98765-00003" },
+  { id: "D004", name: "Unavailable Donor",   bloodGroup: "O+",  isAvailable: false, available: false, latitude: 28.5700, longitude: 77.2150, phone: "+91-98765-00004" },
+  { id: "D005", name: "Wrong Blood Group",   bloodGroup: "A+",  isAvailable: true,  available: true,  latitude: 28.5750, longitude: 77.2200, phone: "+91-98765-00005" },
+  { id: "don_1", name: "Alex Vance",      bloodGroup: "O-",  distanceKm: 1.2, isAvailable: true,  available: true,  latitude: 28.6200, longitude: 77.2180, phone: "+1-555-0011" },
+  { id: "don_2", name: "Jessica Taylor",  bloodGroup: "O-",  distanceKm: 2.8, isAvailable: true,  available: true,  latitude: 28.6050, longitude: 77.2250, phone: "+1-555-0022" },
+  { id: "don_3", name: "Brian Lawson",    bloodGroup: "A+",  distanceKm: 3.4, isAvailable: true,  available: true,  latitude: 28.6400, longitude: 77.2300, phone: "+1-555-0033" },
+  { id: "don_4", name: "Chloe Bennett",   bloodGroup: "AB-", distanceKm: 4.1, isAvailable: false, available: false, latitude: 28.5900, longitude: 77.2400, phone: "+1-555-0044" },
+  { id: "don_5", name: "Rohan Mehta",     bloodGroup: "B+",  distanceKm: 2.0, isAvailable: true,  available: true,  latitude: 28.6100, longitude: 77.1950, phone: "+91-98765-11223" },
+  { id: "don_6", name: "Priya Sharma",    bloodGroup: "O+",  distanceKm: 3.0, isAvailable: true,  available: true,  latitude: 28.6350, longitude: 77.2050, phone: "+91-98765-44556" },
+  { id: "don_7", name: "Ankit Gupta",     bloodGroup: "A-",  distanceKm: 5.5, isAvailable: true,  available: true,  latitude: 28.5800, longitude: 77.2600, phone: "+91-98765-77889" },
+  { id: "don_8", name: "Sunita Yadav",    bloodGroup: "B-",  distanceKm: 6.0, isAvailable: true,  available: true,  latitude: 28.6500, longitude: 77.1800, phone: "+91-98765-00112" }
 ];
+
 
 export const mockEmergencyAlerts = [
   { id: "alt_1", title: "CRITICAL: O- Shortage in Metropolis Sector 4", hospital: "Metro General Trauma Center", timeAgo: "15 mins ago", unitsNeeded: 3 },
