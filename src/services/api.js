@@ -21,12 +21,32 @@ api.interceptors.request.use(
   (error) => Promise.reject(error)
 );
 
-// Response interceptor
+// Response interceptor with token refresh
 api.interceptors.response.use(
   (response) => response,
-  (error) => {
-    if (error.response && error.response.status === 401) {
+  async (error) => {
+    const originalRequest = error.config;
+    if (error.response && error.response.status === 401 && !originalRequest._retry) {
+      originalRequest._retry = true;
+      const refreshToken = localStorage.getItem('redconnect_refresh_token');
+      if (refreshToken) {
+        try {
+          const { data } = await axios.post(`${api.defaults.baseURL}/auth/refresh`, { refreshToken });
+          if (data && data.token) {
+            localStorage.setItem('redconnect_token', data.token);
+            if (data.refreshToken) {
+              localStorage.setItem('redconnect_refresh_token', data.refreshToken);
+            }
+            originalRequest.headers.Authorization = `Bearer ${data.token}`;
+            return api(originalRequest);
+          }
+        } catch (refreshErr) {
+          console.error('[api interceptor] Refresh token failed:', refreshErr.message);
+        }
+      }
       localStorage.removeItem('redconnect_token');
+      localStorage.removeItem('redconnect_refresh_token');
+      localStorage.removeItem('redconnect_user');
     }
     return Promise.reject(error);
   }

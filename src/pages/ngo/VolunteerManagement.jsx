@@ -3,7 +3,7 @@ import { useSelector, useDispatch } from 'react-redux';
 import { motion } from 'framer-motion';
 import { Users, Phone, CheckCircle, UserCheck, Filter } from 'lucide-react';
 import toast from 'react-hot-toast';
-import { assignVolunteer } from '../../redux/ngoSlice';
+import { assignVolunteerThunk } from '../../redux/ngoSlice';
 import { Table } from '../../components/common/Table';
 import { Badge } from '../../components/common/Badge';
 import { Button } from '../../components/common/Button';
@@ -33,7 +33,7 @@ const VolunteerManagement = () => {
 
   const handleAssign = () => {
     if (!assignRole) { toast.error('Please select a role first'); return; }
-    dispatch(assignVolunteer({ id: selectedVolunteer.id, role: assignRole }));
+    dispatch(assignVolunteerThunk({ id: selectedVolunteer.id || selectedVolunteer._id, role: assignRole }));
     toast.success(`✅ ${selectedVolunteer.name} assigned to "${assignRole}"`);
     setSelectedVolunteer(null);
     setAssignRole('');

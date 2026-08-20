@@ -24,7 +24,7 @@ const findEligibleDonors = async (request) => {
 
   for (const radiusKm of radii) {
     const query = {
-      role: { $in: ['donor', 'both'] },
+      role: { $in: ['donor'] },
       bloodGroup: { $in: compatibleGroups },
       isAvailable: true,
       $and: [

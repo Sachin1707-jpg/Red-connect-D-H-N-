@@ -171,6 +171,48 @@ const refresh = async (req, res, next) => {
   }
 };
 
+// POST /api/auth/google
+const googleAuth = async (req, res, next) => {
+  try {
+    const { email, name, role, avatar, phone } = req.body;
+
+    if (!email) {
+      return res.status(400).json({ success: false, message: 'Email is required for Google authentication' });
+    }
+
+    let user = await User.findOne({ email });
+    if (!user) {
+      const generatedPhone = phone || `google_${Date.now()}`;
+      const randomPass = Math.random().toString(36).slice(-10) + 'A1!';
+      user = new User({
+        name: name || 'Google User',
+        email,
+        phone: generatedPhone,
+        password: randomPass,
+        role: role || 'donor',
+        avatar: avatar || '',
+        verified: true,
+      });
+    }
+
+    const { token, refreshToken } = generateTokens(user._id);
+    user.refreshToken = refreshToken;
+    await user.save();
+
+    const userObj = user.toJSON();
+
+    res.status(200).json({
+      success: true,
+      message: 'Google login successful',
+      token,
+      refreshToken,
+      user: userObj,
+    });
+  } catch (err) {
+    next(err);
+  }
+};
+
 // POST /api/auth/logout
 const logout = async (req, res, next) => {
   try {
@@ -185,4 +227,4 @@ const logout = async (req, res, next) => {
   }
 };
 
-module.exports = { register, verifyPhoneOtp, login, refresh, logout };
+module.exports = { register, verifyPhoneOtp, login, googleAuth, refresh, logout };

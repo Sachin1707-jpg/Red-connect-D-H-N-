@@ -17,7 +17,7 @@ const app = express();
 app.use(helmet());
 app.use(
   cors({
-    origin: true, // Auto-reflect request origin to support all local dev ports seamlessly
+    origin: process.env.CLIENT_URL || 'http://localhost:5173',
     credentials: true,
   })
 );

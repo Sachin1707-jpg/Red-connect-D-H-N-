@@ -1,22 +1,36 @@
-import { createSlice } from '@reduxjs/toolkit';
+import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
+import { requestService } from '../services/requestService';
+import { getAvailableDonors } from '../services/firestoreDataService';
+
+export const fetchHospitalCases = createAsyncThunk('hospital/fetchCases', async (filters, { rejectWithValue }) => {
+  try {
+    const requests = await requestService.getRequests(filters);
+    return requests;
+  } catch (err) {
+    return rejectWithValue(err.message || 'Failed to fetch hospital cases');
+  }
+});
+
+export const fetchHospitalDonors = createAsyncThunk('hospital/fetchDonors', async (_, { rejectWithValue }) => {
+  try {
+    const donors = await getAvailableDonors();
+    return donors;
+  } catch (err) {
+    return rejectWithValue(err.message || 'Failed to fetch donors');
+  }
+});
 
 const hospitalSlice = createSlice({
   name: 'hospital',
   initialState: {
     inventory: {
-      'A+': 18, 'A-': 4, 'B+': 22, 'B-': 3,
-      'AB+': 8, 'AB-': 1, 'O+': 35, 'O-': 2
+      'A+': 0, 'A-': 0, 'B+': 0, 'B-': 0,
+      'AB+': 0, 'AB-': 0, 'O+': 0, 'O-': 0
     },
-    donorResponses: [
-      { id: '1', donorName: 'Sarah Jenkins', bloodGroup: 'O-', distance: '2.4 km', availability: 'Available', status: 'Pending', phone: '+1-555-0147' },
-      { id: '2', donorName: 'Alex Vance', bloodGroup: 'O-', distance: '1.2 km', availability: 'Available', status: 'Accepted', phone: '+1-555-0011' },
-      { id: '3', donorName: 'Brian Lawson', bloodGroup: 'A+', distance: '3.4 km', availability: 'Available', status: 'Pending', phone: '+1-555-0033' },
-    ],
-    emergencyCases: [
-      { id: 'c1', patientName: 'Robert Chen', priority: 'Critical', bloodGroup: 'O-', unitsRequired: 3, timeline: 'Surgery in 30 mins' },
-      { id: 'c2', patientName: 'Elena Vance', priority: 'High', bloodGroup: 'B-', unitsRequired: 2, timeline: 'Transfusion today' },
-    ],
+    donorResponses: [],
+    emergencyCases: [],
     loading: false,
+    error: null,
   },
   reducers: {
     updateInventoryUnit: (state, action) => {
@@ -25,11 +39,28 @@ const hospitalSlice = createSlice({
     },
     updateDonorStatus: (state, action) => {
       const { id, status } = action.payload;
-      const index = state.donorResponses.findIndex(d => d.id === id);
+      const index = state.donorResponses.findIndex(d => (d.id || d._id) === id);
       if (index !== -1) {
         state.donorResponses[index].status = status;
       }
     }
+  },
+  extraReducers: (builder) => {
+    builder
+      .addCase(fetchHospitalCases.pending, (state) => {
+        state.loading = true;
+      })
+      .addCase(fetchHospitalCases.fulfilled, (state, action) => {
+        state.loading = false;
+        state.emergencyCases = action.payload || [];
+      })
+      .addCase(fetchHospitalCases.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload;
+      })
+      .addCase(fetchHospitalDonors.fulfilled, (state, action) => {
+        state.donorResponses = action.payload || [];
+      });
   }
 });
 

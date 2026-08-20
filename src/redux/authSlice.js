@@ -48,20 +48,7 @@ const _storedUser = (() => {
 const authSlice = createSlice({
   name: 'auth',
   initialState: {
-    // If a stored token & user exist → resume session; else use default donor for demo
-    user: _storedUser || {
-      id: 'usr_001',
-      name: 'Sarah Jenkins',
-      email: 'sarah.j@example.com',
-      role: 'donor',
-      phone: '+1-555-0147',
-      bloodGroup: 'O-',
-      isAvailable: true,
-      rewardPoints: 850,
-      totalDonations: 8,
-      livesSaved: 24,
-      avatar: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=150',
-    },
+    user: _storedUser || null,
     token: _storedToken || null,
     refreshToken: _storedRefresh || null,
     // ← True when real token present OR always-on demo mode

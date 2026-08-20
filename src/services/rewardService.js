@@ -1,30 +1,9 @@
-import { collection, getDocs, doc, getDoc, setDoc, updateDoc, query, orderBy, limit, increment } from "firebase/firestore";
+import { collection, getDocs, doc, getDoc, updateDoc, query, orderBy, limit, increment } from "firebase/firestore";
 import { db, auth } from "../config/firebase";
-import { mockRewards, mockBadges } from "../data/mockData";
-
-async function seedRewardsIfEmpty() {
-  try {
-    const snap = await getDocs(collection(db, "rewards"));
-    if (snap.empty) {
-      for (const rew of mockRewards) {
-        await setDoc(doc(db, "rewards", rew.id), rew);
-      }
-    }
-    const badgeSnap = await getDocs(collection(db, "badges"));
-    if (badgeSnap.empty) {
-      for (const badge of mockBadges) {
-        await setDoc(doc(db, "badges", badge.id), badge);
-      }
-    }
-  } catch (e) {
-    console.warn("[rewardService] Seed warning:", e);
-  }
-}
 
 export const rewardService = {
   getRewards: async () => {
     try {
-      await seedRewardsIfEmpty();
       const q = query(collection(db, "rewards"));
       const querySnapshot = await getDocs(q);
       return querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
@@ -36,7 +15,6 @@ export const rewardService = {
 
   getBadges: async () => {
     try {
-      await seedRewardsIfEmpty();
       const q = query(collection(db, "badges"));
       const querySnapshot = await getDocs(q);
       return querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));

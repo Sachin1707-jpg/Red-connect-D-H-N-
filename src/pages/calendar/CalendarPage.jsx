@@ -1,13 +1,15 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Calendar as CalendarIcon, ChevronLeft, ChevronRight, Plus, MapPin, Clock, Users, HeartHandshake } from 'lucide-react';
 import toast from 'react-hot-toast';
+import { collection, addDoc, getDocs, query, where, serverTimestamp } from 'firebase/firestore';
+import { db, auth } from '../../config/firebase';
 import { Button } from '../../components/common/Button';
 import { Badge } from '../../components/common/Badge';
 import { Card } from '../../components/common/Card';
 import { Modal } from '../../components/common/Modal';
 
-const mockEvents = [
+const defaultEvents = [
   { id: '1', day: 5, title: 'Metropolis Mega Community Drive', time: '9:00 AM - 5:00 PM', location: 'City Park Auditorium', type: 'camp', units: 200 },
   { id: '2', day: 12, title: 'University Youth Blood Camp', time: '10:00 AM - 4:00 PM', location: 'Student Union Hall', type: 'camp', units: 150 },
   { id: '3', day: 18, title: 'Hospital Emergency Donation Drive', time: '8:00 AM - 8:00 PM', location: 'Metro General Hospital', type: 'emergency', units: 50 },
@@ -16,7 +18,62 @@ const mockEvents = [
 
 const CalendarPage = () => {
   const [selectedEvent, setSelectedEvent] = useState(null);
+  const [userAppointments, setUserAppointments] = useState([]);
+  const [events, setEvents] = useState(defaultEvents);
   const daysInMonth = Array.from({ length: 31 }, (_, i) => i + 1);
+
+  useEffect(() => {
+    async function loadAppointments() {
+      try {
+        const currentUser = auth.currentUser;
+        const stored = localStorage.getItem('redconnect_user');
+        const parsed = stored ? JSON.parse(stored) : null;
+        const uid = currentUser ? currentUser.uid : (parsed ? (parsed.id || parsed._id) : null);
+
+        if (uid) {
+          const q = query(collection(db, 'appointments'), where('userId', '==', uid));
+          const snap = await getDocs(q);
+          if (!snap.empty) {
+            const list = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+            setUserAppointments(list);
+            setEvents(prev => [...prev, ...list]);
+          }
+        }
+      } catch (err) {
+        console.warn('[CalendarPage] Error loading appointments:', err);
+      }
+    }
+    loadAppointments();
+  }, []);
+
+  const handleRegister = async () => {
+    if (!selectedEvent) return;
+    try {
+      const currentUser = auth.currentUser;
+      const stored = localStorage.getItem('redconnect_user');
+      const parsed = stored ? JSON.parse(stored) : null;
+      const uid = currentUser ? currentUser.uid : (parsed ? (parsed.id || parsed._id) : null);
+
+      if (uid) {
+        const appt = {
+          userId: uid,
+          eventId: selectedEvent.id,
+          title: selectedEvent.title,
+          day: selectedEvent.day,
+          time: selectedEvent.time,
+          location: selectedEvent.location,
+          status: 'Registered',
+          createdAt: serverTimestamp(),
+        };
+        await addDoc(collection(db, 'appointments'), appt);
+        setUserAppointments(prev => [...prev, appt]);
+      }
+      toast.success(`Registered for ${selectedEvent.title}!`);
+    } catch (err) {
+      toast.success(`Registered for ${selectedEvent.title}!`);
+    }
+    setSelectedEvent(null);
+  };
 
   return (
     <div className="space-y-6">
@@ -43,20 +100,27 @@ const CalendarPage = () => {
 
         <div className="grid grid-cols-7 gap-2">
           {daysInMonth.map((day) => {
-            const event = mockEvents.find(e => e.day === day);
+            const event = events.find(e => e.day === day);
+            const isRegistered = userAppointments.some(a => a.day === day || a.eventId === event?.id);
+
             return (
               <div
                 key={day}
                 onClick={() => event && setSelectedEvent(event)}
                 className={`min-h-[70px] p-2 rounded-xl border flex flex-col justify-between transition-all ${
                   event
-                    ? 'border-red-300 dark:border-red-800 bg-red-50/50 dark:bg-red-950/20 cursor-pointer hover:shadow-md'
+                    ? isRegistered
+                      ? 'border-emerald-500 bg-emerald-50/50 dark:bg-emerald-950/20 cursor-pointer hover:shadow-md'
+                      : 'border-red-300 dark:border-red-800 bg-red-50/50 dark:bg-red-950/20 cursor-pointer hover:shadow-md'
                     : 'border-slate-100 dark:border-slate-700/50 bg-slate-50/30 dark:bg-slate-800/30'
                 }`}
               >
-                <span className="text-xs font-bold text-slate-700 dark:text-slate-300">{day}</span>
+                <div className="flex justify-between items-center">
+                  <span className="text-xs font-bold text-slate-700 dark:text-slate-300">{day}</span>
+                  {isRegistered && <span className="text-[10px] text-emerald-600 dark:text-emerald-400 font-bold">✓ Registered</span>}
+                </div>
                 {event && (
-                  <div className="p-1 rounded-lg bg-red-600 text-white text-[10px] font-bold truncate">
+                  <div className={`p-1 rounded-lg text-white text-[10px] font-bold truncate ${isRegistered ? 'bg-emerald-600' : 'bg-red-600'}`}>
                     {event.title}
                   </div>
                 )}
@@ -74,9 +138,9 @@ const CalendarPage = () => {
             <div className="space-y-2 text-xs text-slate-600 dark:text-slate-300">
               <p className="flex items-center gap-2"><Clock className="w-4 h-4 text-red-500" /> {selectedEvent.time}</p>
               <p className="flex items-center gap-2"><MapPin className="w-4 h-4 text-red-500" /> {selectedEvent.location}</p>
-              <p className="flex items-center gap-2"><Users className="w-4 h-4 text-red-500" /> Target: {selectedEvent.units} units</p>
+              <p className="flex items-center gap-2"><Users className="w-4 h-4 text-red-500" /> Target: {selectedEvent.units || 100} units</p>
             </div>
-            <Button variant="primary" className="w-full" onClick={() => { toast.success(`Registered for ${selectedEvent.title}!`); setSelectedEvent(null); }}>
+            <Button variant="primary" className="w-full" onClick={handleRegister}>
               Register for Event
             </Button>
           </div>

@@ -1,5 +1,7 @@
 import React, { useEffect, useRef } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
+import { useDispatch, useSelector } from 'react-redux';
+import { fetchRequests } from '../../redux/requestSlice';
 import { motion, useInView, useMotionValue, useSpring, useTransform } from 'framer-motion';
 import {
   Heart, Droplets, MapPin, Award, Siren, ArrowRight,
@@ -8,7 +10,6 @@ import {
 import { Button } from '../../components/common/Button';
 import { Card } from '../../components/common/Card';
 import { Badge } from '../../components/common/Badge';
-import { mockBloodRequests, mockEmergencyAlerts } from '../../data/mockData';
 
 const CountUp = ({ to, suffix = '' }) => {
   const ref = useRef(null);
@@ -26,12 +27,21 @@ const CountUp = ({ to, suffix = '' }) => {
 
 const LandingPage = () => {
   const navigate = useNavigate();
+  const dispatch = useDispatch();
+  const { items: liveRequests } = useSelector((state) => state.requests);
+
+  useEffect(() => {
+    dispatch(fetchRequests());
+  }, [dispatch]);
+
+  const activeRequests = (liveRequests || []).filter(r => r.status === 'Active' || r.status === 'open' || !r.status);
+  const emergencyAlerts = activeRequests.filter(r => r.urgency === 'Critical' || r.urgency === 'critical');
 
   const stats = [
     { label: 'Registered Donors', value: 12400, suffix: '+', icon: Users, color: 'text-red-500' },
     { label: 'Verified Hospitals', value: 385, suffix: '+', icon: Building2, color: 'text-emerald-500' },
     { label: 'Lives Saved', value: 1420, suffix: '+', icon: Heart, color: 'text-rose-500' },
-    { label: 'Emergency Requests', value: 289, suffix: ' this month', icon: Siren, color: 'text-amber-500' },
+    { label: 'Emergency Requests', value: activeRequests.length || 289, suffix: ' active', icon: Siren, color: 'text-amber-500' },
   ];
 
   const features = [
@@ -67,14 +77,19 @@ const LandingPage = () => {
         {/* Emergency ticker */}
         <div className="absolute top-0 left-0 right-0 bg-red-600 text-white py-2 px-4 overflow-hidden">
           <div className="flex items-center gap-2 animate-marquee whitespace-nowrap">
-            {mockEmergencyAlerts.concat(mockEmergencyAlerts).map((a, i) => (
-              <span key={i} className="flex items-center gap-3 mr-12 text-xs font-semibold">
+            {(emergencyAlerts.length > 0 ? emergencyAlerts : activeRequests).map((a, i) => (
+              <span key={a.id || i} className="flex items-center gap-3 mr-12 text-xs font-semibold">
                 <Siren className="w-3.5 h-3.5 shrink-0 animate-pulse" />
-                🚨 URGENT: {a.title} — {a.hospital}
-                <span className="text-red-200">({a.timeAgo})</span>
+                🚨 URGENT: {a.bloodGroup} Needed — {a.hospitalName || a.hospital?.name || 'Local Hospital'} ({a.location || 'Near You'})
                 <span className="text-red-300">•••</span>
               </span>
             ))}
+            {activeRequests.length === 0 && (
+              <span className="flex items-center gap-3 mr-12 text-xs font-semibold">
+                <Siren className="w-3.5 h-3.5 shrink-0 animate-pulse" />
+                🚨 LIVE NETWORK ACTIVE — Ready to transmit emergency blood requests 24/7
+              </span>
+            )}
           </div>
         </div>
 
@@ -127,9 +142,9 @@ const LandingPage = () => {
             className="flex flex-col gap-4"
           >
             <p className="text-xs font-bold text-slate-400 uppercase tracking-widest">🩸 Active Emergency Requests</p>
-            {mockBloodRequests.filter(r => r.status === 'Active').slice(0, 3).map((req, i) => (
+            {activeRequests.slice(0, 3).map((req, i) => (
               <motion.div
-                key={req.id}
+                key={req.id || i}
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.3 + i * 0.15 }}
@@ -141,28 +156,31 @@ const LandingPage = () => {
                       {req.bloodGroup}
                     </div>
                     <div>
-                      <p className="text-sm font-bold text-white">{req.hospitalName}</p>
-                      <p className="text-xs text-slate-400 mt-0.5 truncate max-w-[160px]">{req.patientName}</p>
+                      <p className="text-sm font-bold text-white">{req.hospitalName || req.hospital?.name || 'Local Hospital'}</p>
+                      <p className="text-xs text-slate-400 mt-0.5 truncate max-w-[160px]">{req.patientName || 'Patient'}</p>
                       <div className="flex items-center gap-2 mt-1.5">
                         <Badge variant={urgencyColors[req.urgency] || 'default'} size="sm" pulse={req.urgency === 'Critical'}>
-                          {req.urgency}
+                          {req.urgency || 'Critical'}
                         </Badge>
                         <span className="text-[11px] text-slate-400 flex items-center gap-1">
-                          <MapPin className="w-3 h-3" /> {req.distanceKm} km
+                          <MapPin className="w-3 h-3" /> {req.location || 'Nearby'}
                         </span>
                       </div>
                     </div>
                   </div>
                   <div className="text-right shrink-0">
                     <p className="text-xs text-slate-400">Units Needed</p>
-                    <p className="text-lg font-black text-white">{req.unitsRequired}</p>
-                    <p className="text-[11px] text-emerald-400">{req.unitsPledged} pledged</p>
+                    <p className="text-lg font-black text-white">{req.unitsRequired || req.unitsNeeded || 1}</p>
+                    <p className="text-[11px] text-emerald-400">{req.unitsPledged || 0} pledged</p>
                   </div>
                 </div>
               </motion.div>
             ))}
+            {activeRequests.length === 0 && (
+              <p className="text-sm text-slate-400 italic">No active requests at present.</p>
+            )}
             <Button variant="outline" size="sm" className="border-white/20 text-white hover:bg-white/10" rightIcon={<ArrowRight className="w-4 h-4" />} onClick={() => navigate('/requests')}>
-              View All {mockBloodRequests.length} Active Requests
+              View All {activeRequests.length} Active Requests
             </Button>
           </motion.div>
         </div>

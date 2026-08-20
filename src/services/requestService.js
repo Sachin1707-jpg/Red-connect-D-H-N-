@@ -65,49 +65,71 @@ export const requestService = {
   },
 
   createRequest: async (requestData) => {
+    let createdRecord = null;
+
     try {
-      // Try Node.js Express REST API backend first
+      // 1. Try Node.js Express REST API backend
       const res = await api.post('/requests', {
         patientName: requestData.patientName,
         bloodGroup: requestData.bloodGroup,
         unitsNeeded: Number(requestData.unitsRequired || requestData.unitsNeeded || 1),
         urgency: (requestData.urgency || 'Critical').toLowerCase(),
         hospital: {
-          name: requestData.hospitalName || 'Metro General Hospital',
-          address: requestData.location || 'Metropolis',
-          location: { type: 'Point', coordinates: [77.2090, 28.6139] },
+          name: requestData.hospitalName || 'Hospital',
+          address: requestData.location || '',
+          location: {
+            type: 'Point',
+            coordinates: requestData.coordinates || [
+              requestData.longitude ?? 77.2090,
+              requestData.latitude ?? 28.6139,
+            ],
+          },
         },
         description: requestData.description || '',
       });
 
       if (res.data && res.data.success && res.data.data) {
         const r = res.data.data;
-        return {
+        createdRecord = {
           id: r._id,
           ...r,
+          hospitalName: requestData.hospitalName,
+          unitsRequired: Number(requestData.unitsRequired || 1),
+          location: requestData.location,
           status: 'Active',
         };
       }
     } catch (apiError) {
-      console.warn("[requestService] REST API create failed, falling back to Firestore:", apiError.message);
+      console.warn("[requestService] REST API create fallback to Firestore:", apiError.message);
     }
 
-    // Fallback to Firestore
+    // 2. Always persist to Firestore as well so real-time maps & Firestore queries see it
     try {
       const newReq = {
-        ...requestData,
+        patientName: requestData.patientName,
+        hospitalName: requestData.hospitalName || 'Hospital',
+        bloodGroup: requestData.bloodGroup,
+        unitsRequired: Number(requestData.unitsRequired || requestData.unitsNeeded || 1),
         unitsPledged: 0,
+        urgency: requestData.urgency || 'Critical',
+        location: requestData.location || 'Metropolis',
+        hospitalContact: requestData.hospitalContact || '',
+        description: requestData.description || '',
         status: "Active",
         distanceKm: Math.floor(Math.random() * 10) + 1,
         createdAt: serverTimestamp(),
       };
       
       const docRef = await addDoc(collection(db, "bloodRequests"), newReq);
-      return { id: docRef.id, ...newReq };
-    } catch (error) {
-      console.error("Error creating request:", error);
-      throw error;
+      if (!createdRecord) {
+        createdRecord = { id: docRef.id, ...newReq };
+      }
+    } catch (fsErr) {
+      console.warn("[requestService] Firestore create write warning:", fsErr.message);
     }
+
+    if (createdRecord) return createdRecord;
+    throw new Error('Failed to persist request to database');
   },
 
   pledgeRequest: async (requestId) => {

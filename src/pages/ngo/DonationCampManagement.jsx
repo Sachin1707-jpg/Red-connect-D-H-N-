@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -6,7 +6,7 @@ import { useDispatch, useSelector } from 'react-redux';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Calendar, Plus, Edit3, Trash2, MapPin, Users, Save, X } from 'lucide-react';
 import toast from 'react-hot-toast';
-import { addCamp } from '../../redux/ngoSlice';
+import { createCamp, fetchCamps } from '../../redux/ngoSlice';
 import { Button } from '../../components/common/Button';
 import { Input } from '../../components/common/Input';
 import { Badge } from '../../components/common/Badge';
@@ -28,11 +28,19 @@ const DonationCampManagement = () => {
 
   const { register, handleSubmit, reset, formState: { errors, isSubmitting } } = useForm({ resolver: zodResolver(schema) });
 
-  const onSubmit = (data) => {
-    dispatch(addCamp({ id: `camp_${Date.now()}`, ...data, registered: 0 }));
-    toast.success(`🎉 "${data.title}" camp created and published!`);
-    reset();
-    setShowCreateModal(false);
+  useEffect(() => {
+    dispatch(fetchCamps());
+  }, [dispatch]);
+
+  const onSubmit = async (data) => {
+    const result = await dispatch(createCamp({ id: `camp_${Date.now()}`, ...data, registered: 0 }));
+    if (createCamp.fulfilled.match(result)) {
+      toast.success(`🎉 "${data.title}" camp created and published!`);
+      reset();
+      setShowCreateModal(false);
+    } else {
+      toast.error('Failed to create camp. Please try again.');
+    }
   };
 
   return (

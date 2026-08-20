@@ -1,44 +1,82 @@
-import { createSlice } from '@reduxjs/toolkit';
+import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
+import { adminService } from '../services/adminService';
+
+export const fetchAdminUsers = createAsyncThunk('admin/fetchUsers', async (filters, { rejectWithValue }) => {
+  try {
+    return await adminService.listUsers(filters);
+  } catch (err) {
+    return rejectWithValue(err.message || 'Failed to fetch users');
+  }
+});
+
+export const fetchAdminStats = createAsyncThunk('admin/fetchStats', async (_, { rejectWithValue }) => {
+  try {
+    return await adminService.getStats();
+  } catch (err) {
+    return rejectWithValue(err.message || 'Failed to fetch stats');
+  }
+});
+
+export const verifyAdminUser = createAsyncThunk('admin/verifyUser', async ({ id, verified }, { rejectWithValue }) => {
+  try {
+    return await adminService.verifyUser(id, verified);
+  } catch (err) {
+    return rejectWithValue(err.message || 'Failed to verify user');
+  }
+});
 
 const adminSlice = createSlice({
   name: 'admin',
   initialState: {
-    pendingHospitals: [
-      { id: 'h_p1', name: 'Apex Heart & Trauma Center', license: 'HOSP-88102-NY', address: '120 Apex Way, Sector 9', status: 'Pending Approval' },
-      { id: 'h_p2', name: 'St. Mary Specialized Hospital', license: 'HOSP-77190-CA', address: '45 Saint Mary Blvd', status: 'Pending Approval' },
-    ],
-    pendingNgos: [
-      { id: 'n_p1', name: 'Hope Blood Relief NGO', license: 'NGO-44102-REG', location: 'Metropolis North', status: 'Pending Approval' },
-    ],
-    users: [
-      { id: 'u1', name: 'Sarah Jenkins', role: 'donor', status: 'Active', email: 'sarah.j@example.com' },
-      { id: 'u2', name: 'Metro General Hospital', role: 'hospital', status: 'Active', email: 'emergency@citygeneral.org' },
-      { id: 'u3', name: 'Red Cross Community', role: 'ngo', status: 'Active', email: 'contact@redcross.org' },
-      { id: 'u4', name: 'John Suspended', role: 'donor', status: 'Suspended', email: 'john.s@example.com' },
-    ],
-    reportedRequests: [
-      { id: 'r1', title: 'Suspicious duplicate O- request', reportedBy: 'Donor Mark', reason: 'Unverified medical document', status: 'Under Review' },
-    ],
-    auditLogs: [
-      { id: 'al1', action: 'Hospital Approval', user: 'Admin User', details: 'Approved Metro General Hospital license', timestamp: '2 hours ago' },
-      { id: 'al2', action: 'User Suspended', user: 'Admin User', details: 'Suspended user John Suspended for fake requests', timestamp: '1 day ago' },
-    ]
+    pendingHospitals: [],
+    pendingNgos: [],
+    users: [],
+    stats: null,
+    reportedRequests: [],
+    auditLogs: [],
+    loading: false,
+    error: null,
   },
   reducers: {
     approveHospital: (state, action) => {
-      state.pendingHospitals = state.pendingHospitals.filter(h => h.id !== action.payload);
+      state.pendingHospitals = state.pendingHospitals.filter(h => (h.id || h._id) !== action.payload);
     },
     approveNgo: (state, action) => {
-      state.pendingNgos = state.pendingNgos.filter(n => n.id !== action.payload);
+      state.pendingNgos = state.pendingNgos.filter(n => (n.id || n._id) !== action.payload);
     },
     updateUserRoleStatus: (state, action) => {
       const { id, status, role } = action.payload;
-      const index = state.users.findIndex(u => u.id === id);
+      const index = state.users.findIndex(u => (u.id || u._id) === id);
       if (index !== -1) {
         if (status) state.users[index].status = status;
         if (role) state.users[index].role = role;
       }
     }
+  },
+  extraReducers: (builder) => {
+    builder
+      .addCase(fetchAdminUsers.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(fetchAdminUsers.fulfilled, (state, action) => {
+        state.loading = false;
+        state.users = action.payload || [];
+      })
+      .addCase(fetchAdminUsers.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload;
+      })
+      .addCase(fetchAdminStats.fulfilled, (state, action) => {
+        state.stats = action.payload;
+      })
+      .addCase(verifyAdminUser.fulfilled, (state, action) => {
+        const updated = action.payload;
+        if (updated) {
+          const idx = state.users.findIndex(u => (u.id || u._id) === (updated.id || updated._id));
+          if (idx !== -1) state.users[idx] = updated;
+        }
+      });
   }
 });
 

@@ -55,33 +55,33 @@ const getNearbyRequests = async (req, res, next) => {
   try {
     const { lng, lat, maxDistanceKm = 50, bloodGroup, urgency } = req.query;
 
-    let coords;
-    if (lng && lat) {
-      coords = [parseFloat(lng), parseFloat(lat)];
-    } else if (req.user && req.user.location && req.user.location.coordinates[0] !== 0) {
-      coords = req.user.location.coordinates;
-    } else {
-      coords = [77.2090, 28.6139]; // Default coordinates (Delhi/Metropolis)
-    }
-
     const query = {
-      status: 'open',
-      'hospital.location': {
+      status: { $in: ['open', 'Active', 'active'] },
+    };
+
+    if (lng && lat) {
+      const coords = [parseFloat(lng), parseFloat(lat)];
+      query['hospital.location'] = {
         $near: {
           $geometry: { type: 'Point', coordinates: coords },
           $maxDistance: kmToMetres(parseFloat(maxDistanceKm)),
         },
-      },
-    };
+      };
+    }
 
     if (bloodGroup && bloodGroup !== 'ALL') {
       query.bloodGroup = bloodGroup;
     }
     if (urgency && urgency !== 'ALL') {
-      query.urgency = urgency;
+      query.urgency = urgency.toLowerCase();
     }
 
-    const requests = await BloodRequest.find(query).populate('requesterId', 'name phone email role');
+    let queryExec = BloodRequest.find(query).populate('requesterId', 'name phone email role');
+    if (!lng || !lat) {
+      queryExec = queryExec.sort({ createdAt: -1 });
+    }
+
+    const requests = await queryExec;
 
     res.status(200).json({
       success: true,
