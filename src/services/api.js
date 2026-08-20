@@ -2,7 +2,7 @@ import axios from 'axios';
 
 // Base Axios instance
 export const api = axios.create({
-  baseURL: import.meta.env.VITE_API_BASE_URL || 'https://api.redconnect.org/v1',
+  baseURL: import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000/api',
   headers: {
     'Content-Type': 'application/json',
   },

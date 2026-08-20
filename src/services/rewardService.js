@@ -1,9 +1,30 @@
-import { collection, getDocs, doc, getDoc, updateDoc, query, orderBy, limit, increment } from "firebase/firestore";
+import { collection, getDocs, doc, getDoc, setDoc, updateDoc, query, orderBy, limit, increment } from "firebase/firestore";
 import { db, auth } from "../config/firebase";
+import { mockRewards, mockBadges } from "../data/mockData";
+
+async function seedRewardsIfEmpty() {
+  try {
+    const snap = await getDocs(collection(db, "rewards"));
+    if (snap.empty) {
+      for (const rew of mockRewards) {
+        await setDoc(doc(db, "rewards", rew.id), rew);
+      }
+    }
+    const badgeSnap = await getDocs(collection(db, "badges"));
+    if (badgeSnap.empty) {
+      for (const badge of mockBadges) {
+        await setDoc(doc(db, "badges", badge.id), badge);
+      }
+    }
+  } catch (e) {
+    console.warn("[rewardService] Seed warning:", e);
+  }
+}
 
 export const rewardService = {
   getRewards: async () => {
     try {
+      await seedRewardsIfEmpty();
       const q = query(collection(db, "rewards"));
       const querySnapshot = await getDocs(q);
       return querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
@@ -15,6 +36,7 @@ export const rewardService = {
 
   getBadges: async () => {
     try {
+      await seedRewardsIfEmpty();
       const q = query(collection(db, "badges"));
       const querySnapshot = await getDocs(q);
       return querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
@@ -33,11 +55,16 @@ export const rewardService = {
       );
       const querySnapshot = await getDocs(q);
       
+      if (querySnapshot.empty) {
+        const allUsers = await getDocs(collection(db, "users"));
+        return allUsers.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      }
+
       return querySnapshot.docs.map(doc => {
         const data = doc.data();
         return {
           id: doc.id,
-          name: data.name || "Anonymous",
+          name: data.name || "Anonymous Donor",
           avatar: data.avatar,
           points: data.rewardPoints || 0,
           donations: data.totalDonations || 0
@@ -62,9 +89,8 @@ export const rewardService = {
       }
       
       const rewardData = rewardSnap.data();
-      const pointsNeeded = rewardData.points;
+      const pointsNeeded = rewardData.pointsCost || rewardData.points || 0;
       
-      // Check user points
       const userRef = doc(db, "users", user.uid);
       const userSnap = await getDoc(userRef);
       
@@ -78,7 +104,6 @@ export const rewardService = {
         throw new Error("Not enough points to redeem this reward");
       }
       
-      // Deduct points
       await updateDoc(userRef, {
         rewardPoints: increment(-pointsNeeded)
       });

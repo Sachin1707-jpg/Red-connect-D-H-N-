@@ -1,6 +1,5 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import { notificationService } from '../services/notificationService';
-import { mockNotifications } from '../data/mockData';
 
 export const fetchNotifications = createAsyncThunk('notifications/fetch', async () => {
   return await notificationService.getNotifications();
@@ -21,14 +20,18 @@ export const deleteNotification = createAsyncThunk('notifications/delete', async
 const notificationSlice = createSlice({
   name: 'notifications',
   initialState: {
-    items: mockNotifications,
+    items: [],
     loading: false,
     error: null,
   },
   reducers: {},
   extraReducers: (builder) => {
     builder
+      .addCase(fetchNotifications.pending, (state) => {
+        state.loading = true;
+      })
       .addCase(fetchNotifications.fulfilled, (state, action) => {
+        state.loading = false;
         state.items = action.payload;
       })
       .addCase(markNotificationRead.fulfilled, (state, action) => {

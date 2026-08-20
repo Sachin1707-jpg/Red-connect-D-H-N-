@@ -1,12 +1,29 @@
-import { doc, getDoc, updateDoc, collection, query, where, getDocs } from "firebase/firestore";
+import { doc, getDoc, updateDoc, setDoc, collection, query, where, getDocs } from "firebase/firestore";
 import { db, auth } from "../config/firebase";
+import { mockDonations } from "../data/mockData";
+
+async function seedDonationsIfEmpty(userId) {
+  try {
+    const q = query(collection(db, "donations"), where("userId", "==", userId));
+    const snap = await getDocs(q);
+    if (snap.empty) {
+      for (const don of mockDonations) {
+        await setDoc(doc(db, "donations", `${userId}_${don.id}`), {
+          ...don,
+          userId,
+        });
+      }
+    }
+  } catch (e) {
+    console.warn("[profileService] Seed warning:", e);
+  }
+}
 
 export const profileService = {
   getProfile: async () => {
     try {
       const user = auth.currentUser;
       if (!user) {
-        // Fallback to local storage if accessed before auth is fully initialized
         const stored = localStorage.getItem('redconnect_user');
         return stored ? JSON.parse(stored) : null;
       }
@@ -42,7 +59,7 @@ export const profileService = {
   },
 
   toggleAvailability: async (isAvailable) => {
-    return await profileService.updateProfile({ isAvailable });
+    return await profileService.updateProfile({ isAvailable, available: isAvailable });
   },
 
   getDonationHistory: async () => {
@@ -50,6 +67,8 @@ export const profileService = {
       const user = auth.currentUser;
       if (!user) return [];
       
+      await seedDonationsIfEmpty(user.uid);
+
       const q = query(
         collection(db, "donations"),
         where("userId", "==", user.uid)
@@ -58,10 +77,9 @@ export const profileService = {
       const querySnapshot = await getDocs(q);
       const donations = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
       
-      // Sort client side for now
       donations.sort((a, b) => {
-        const aTime = a.date?.toMillis ? a.date.toMillis() : 0;
-        const bTime = b.date?.toMillis ? b.date.toMillis() : 0;
+        const aTime = a.date?.toMillis ? a.date.toMillis() : new Date(a.date || 0).getTime();
+        const bTime = b.date?.toMillis ? b.date.toMillis() : new Date(b.date || 0).getTime();
         return bTime - aTime;
       });
       

@@ -1,6 +1,5 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import { rewardService } from '../services/rewardService';
-import { mockRewards, mockBadges, mockLeaderboard } from '../data/mockData';
 
 export const fetchRewards = createAsyncThunk('rewards/fetch', async () => {
   return await rewardService.getRewards();
@@ -21,17 +20,21 @@ export const redeemVoucher = createAsyncThunk('rewards/redeem', async (id) => {
 const rewardSlice = createSlice({
   name: 'rewards',
   initialState: {
-    vouchers: mockRewards,
-    badges: mockBadges,
-    leaderboard: mockLeaderboard,
-    pointsBalance: 850,
+    vouchers: [],
+    badges: [],
+    leaderboard: [],
+    pointsBalance: 0,
     loading: false,
     error: null,
   },
   reducers: {},
   extraReducers: (builder) => {
     builder
+      .addCase(fetchRewards.pending, (state) => {
+        state.loading = true;
+      })
       .addCase(fetchRewards.fulfilled, (state, action) => {
+        state.loading = false;
         state.vouchers = action.payload;
       })
       .addCase(fetchBadges.fulfilled, (state, action) => {
@@ -41,7 +44,8 @@ const rewardSlice = createSlice({
         state.leaderboard = action.payload;
       })
       .addCase(redeemVoucher.fulfilled, (state, action) => {
-        state.pointsBalance -= action.payload.reward.pointsCost;
+        const cost = action.payload.reward.pointsCost || action.payload.reward.points || 0;
+        state.pointsBalance = Math.max(0, state.pointsBalance - cost);
       });
   },
 });

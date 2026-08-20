@@ -12,6 +12,8 @@ import { useSelector } from 'react-redux';
 
 // Lazy-loaded pages
 const LandingPage           = lazy(() => import('../pages/landing/LandingPage'));
+const AboutPage             = lazy(() => import('../pages/landing/AboutPage'));
+const HowItWorksPage        = lazy(() => import('../pages/landing/HowItWorksPage'));
 const EmergencyRequestsPage = lazy(() => import('../pages/requests/EmergencyRequestsPage'));
 const NearbyRequestsPage    = lazy(() => import('../pages/requests/NearbyRequestsPage'));
 const BloodBanksPage        = lazy(() => import('../pages/requests/BloodBanksPage'));
@@ -31,6 +33,7 @@ const NotificationsPage      = lazy(() => import('../pages/notifications/Notific
 const SettingsPage           = lazy(() => import('../pages/settings/SettingsPage'));
 
 const HospitalDashboard      = lazy(() => import('../pages/hospital/HospitalDashboard'));
+const CreateBloodRequestPage = lazy(() => import('../pages/hospital/CreateBloodRequestPage'));
 const HospitalInventory      = lazy(() => import('../pages/hospital/HospitalInventory'));
 const DonorResponses         = lazy(() => import('../pages/hospital/DonorResponses'));
 const HospitalEmergencyCases = lazy(() => import('../pages/hospital/HospitalEmergencyCases'));
@@ -45,6 +48,7 @@ const AdminDashboard         = lazy(() => import('../pages/admin/AdminDashboard'
 const UserManagement         = lazy(() => import('../pages/admin/UserManagement'));
 const HospitalApproval       = lazy(() => import('../pages/admin/HospitalApproval'));
 const NgoApproval            = lazy(() => import('../pages/admin/NgoApproval'));
+const RequestVerificationPage= lazy(() => import('../pages/admin/RequestVerificationPage'));
 const AuditLogsPage          = lazy(() => import('../pages/admin/AuditLogsPage'));
 
 // Advanced Modules
@@ -86,6 +90,8 @@ const router = createBrowserRouter([
     element: <PublicLayout />,
     children: [
       { index: true,         element: W(LandingPage) },
+      { path: 'about',       element: W(AboutPage) },
+      { path: 'how-it-works',element: W(HowItWorksPage) },
     ],
   },
   // Shared (Auth Aware)
@@ -132,6 +138,7 @@ const router = createBrowserRouter([
 
           // Hospital
           { path: 'hospital/dashboard', element: W(HospitalDashboard) },
+          { path: 'hospital/create-request', element: W(CreateBloodRequestPage) },
           { path: 'hospital/inventory', element: W(HospitalInventory) },
           { path: 'hospital/donors',    element: W(DonorResponses) },
           { path: 'hospital/emergency', element: W(HospitalEmergencyCases) },
@@ -148,6 +155,7 @@ const router = createBrowserRouter([
           { path: 'admin/users',     element: W(UserManagement) },
           { path: 'admin/hospitals', element: W(HospitalApproval) },
           { path: 'admin/ngos',      element: W(NgoApproval) },
+          { path: 'admin/requests',  element: W(RequestVerificationPage) },
           { path: 'admin/activity',  element: W(AuditLogsPage) },
 
           // Advanced Modules
