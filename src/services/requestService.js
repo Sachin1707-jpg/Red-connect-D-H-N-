@@ -4,68 +4,97 @@ import { api } from "./api";
 
 export const requestService = {
   getRequests: async (filters = {}) => {
+    let mongoResults = [];
+    let firestoreResults = [];
+
+    // 1. Try Express REST API (MongoDB)
     try {
-      // Try Node.js Express REST API backend first
-      const params = new URLSearchParams(filters).toString();
-      const res = await api.get(`/requests/nearby?${params}`);
-      if (res.data && res.data.success && res.data.data) {
-        return res.data.data.map(r => ({
+      const params = new URLSearchParams(
+        Object.fromEntries(Object.entries(filters).filter(([, v]) => v && v !== 'ALL' && v !== ''))
+      ).toString();
+      const res = await api.get(`/requests/nearby${params ? `?${params}` : ''}`);
+      if (res.data && res.data.success && Array.isArray(res.data.data)) {
+        mongoResults = res.data.data.map(r => ({
           id: r._id,
-          hospitalName: r.hospital?.name || r.hospitalName,
+          _mongoId: r._id,
+          hospitalName: r.hospital?.name || r.hospitalName || 'Hospital',
           patientName: r.patientName,
           bloodGroup: r.bloodGroup,
-          unitsRequired: r.unitsNeeded || r.unitsRequired,
+          unitsRequired: r.unitsNeeded || r.unitsRequired || 1,
           unitsPledged: r.unitsFulfilled || r.unitsPledged || 0,
           urgency: r.urgency === 'critical' ? 'Critical' : r.urgency === 'urgent' ? 'High' : 'Medium',
           location: r.hospital?.address || r.location || 'Metropolis',
-          status: r.status === 'open' ? 'Active' : r.status,
+          status: (r.status === 'open' || r.status === 'active' || r.status === 'Active') ? 'Active' : r.status,
           createdAt: r.createdAt,
+          description: r.description || '',
         }));
       }
     } catch (apiError) {
-      console.warn("[requestService] REST API unavailable, falling back to Firestore:", apiError.message);
+      console.warn("[requestService] REST API unavailable, using Firestore only:", apiError.message);
     }
 
-    // Fallback to Firestore
+    // 2. Always fetch from Firestore as well (catches offline-created requests)
     try {
       let q = collection(db, "bloodRequests");
-      
+      const conditions = [];
+
       if (filters.bloodGroup && filters.bloodGroup !== 'ALL') {
-        q = query(q, where("bloodGroup", "==", filters.bloodGroup));
+        conditions.push(where("bloodGroup", "==", filters.bloodGroup));
       }
 
+      const fsQuery = conditions.length > 0 ? query(q, ...conditions) : q;
+      const querySnapshot = await getDocs(fsQuery);
+      let fsResult = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+
+      // Filter by status — Firestore stores 'Active'
+      fsResult = fsResult.filter(r => r.status === 'Active' || r.status === 'active' || r.status === 'open');
+
       if (filters.urgency && filters.urgency !== 'ALL') {
-        q = query(q, where("urgency", "==", filters.urgency));
+        fsResult = fsResult.filter(r => (r.urgency || '').toLowerCase() === filters.urgency.toLowerCase());
       }
-      
-      const querySnapshot = await getDocs(q);
-      let result = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
 
       if (filters.search) {
         const searchQ = filters.search.toLowerCase();
-        result = result.filter(
-          (r) =>
-            (r.hospitalName && r.hospitalName.toLowerCase().includes(searchQ)) ||
-            (r.patientName && r.patientName.toLowerCase().includes(searchQ)) ||
-            (r.location && r.location.toLowerCase().includes(searchQ))
+        fsResult = fsResult.filter(r =>
+          (r.hospitalName && r.hospitalName.toLowerCase().includes(searchQ)) ||
+          (r.patientName && r.patientName.toLowerCase().includes(searchQ)) ||
+          (r.location && r.location.toLowerCase().includes(searchQ))
         );
       }
 
-      result.sort((a, b) => {
-        const aTime = a.createdAt?.toMillis ? a.createdAt.toMillis() : 0;
-        const bTime = b.createdAt?.toMillis ? b.createdAt.toMillis() : 0;
-        return bTime - aTime;
-      });
-
-      return result;
+      firestoreResults = fsResult;
     } catch (error) {
-      console.error("Error getting requests:", error);
-      throw error;
+      console.warn("[requestService] Firestore fetch warning:", error.message);
     }
+
+    // 3. Merge: prefer MongoDB results, add Firestore-only docs (no MongoDB equivalent)
+    const mongoIds = new Set(mongoResults.map(r => r.id));
+    const uniqueFirestore = firestoreResults.filter(r => !mongoIds.has(r.id));
+    const merged = [...mongoResults, ...uniqueFirestore];
+
+    // Sort by createdAt descending
+    merged.sort((a, b) => {
+      const aTime = a.createdAt?.toMillis ? a.createdAt.toMillis() : a.createdAt ? new Date(a.createdAt).getTime() : 0;
+      const bTime = b.createdAt?.toMillis ? b.createdAt.toMillis() : b.createdAt ? new Date(b.createdAt).getTime() : 0;
+      return bTime - aTime;
+    });
+
+    if (merged.length > 0) return merged;
+
+    // Final fallback: throw if truly empty and both failed
+    if (mongoResults.length === 0 && firestoreResults.length === 0) {
+      return []; // return empty rather than throw — no data is not an error
+    }
+    return merged;
   },
+
 
   createRequest: async (requestData) => {
     let createdRecord = null;
+
+    // Normalize urgency: frontend uses 'Critical'/'High'/'Medium', backend expects 'critical'/'urgent'/'planned'
+    const urgencyMap = { critical: 'critical', high: 'urgent', medium: 'planned', urgent: 'urgent', planned: 'planned' };
+    const normalizedUrgency = urgencyMap[(requestData.urgency || 'Critical').toLowerCase()] || 'urgent';
 
     try {
       // 1. Try Node.js Express REST API backend
@@ -73,7 +102,7 @@ export const requestService = {
         patientName: requestData.patientName,
         bloodGroup: requestData.bloodGroup,
         unitsNeeded: Number(requestData.unitsRequired || requestData.unitsNeeded || 1),
-        urgency: (requestData.urgency || 'Critical').toLowerCase(),
+        urgency: normalizedUrgency,
         hospital: {
           name: requestData.hospitalName || 'Hospital',
           address: requestData.location || '',

@@ -10,12 +10,16 @@ const createRequest = async (req, res, next) => {
   try {
     const { patientName, bloodGroup, unitsNeeded, urgency, hospital, description, requiredDate } = req.body;
 
+    // Normalize urgency: frontend sends 'Critical'/'High'/'Medium', DB expects 'critical'/'urgent'/'planned'
+    const urgencyMap = { critical: 'critical', high: 'urgent', medium: 'planned', urgent: 'urgent', planned: 'planned' };
+    const normalizedUrgency = urgencyMap[(urgency || 'urgent').toLowerCase()] || 'urgent';
+
     const newRequest = new BloodRequest({
       requesterId: req.user._id,
       patientName,
       bloodGroup,
       unitsNeeded,
-      urgency: urgency || 'urgent',
+      urgency: normalizedUrgency,
       hospital,
       description,
       requiredDate: requiredDate ? new Date(requiredDate) : null,
@@ -56,7 +60,7 @@ const getNearbyRequests = async (req, res, next) => {
     const { lng, lat, maxDistanceKm = 50, bloodGroup, urgency } = req.query;
 
     const query = {
-      status: { $in: ['open', 'Active', 'active'] },
+      status: { $nin: ['fulfilled', 'expired', 'cancelled'] }, // show all non-closed requests
     };
 
     if (lng && lat) {
@@ -73,12 +77,14 @@ const getNearbyRequests = async (req, res, next) => {
       query.bloodGroup = bloodGroup;
     }
     if (urgency && urgency !== 'ALL') {
-      query.urgency = urgency.toLowerCase();
+      // normalize urgency filter from frontend
+      const urgencyMap = { critical: 'critical', high: 'urgent', medium: 'planned', urgent: 'urgent', planned: 'planned' };
+      query.urgency = urgencyMap[urgency.toLowerCase()] || urgency.toLowerCase();
     }
 
     let queryExec = BloodRequest.find(query).populate('requesterId', 'name phone email role');
     if (!lng || !lat) {
-      queryExec = queryExec.sort({ createdAt: -1 });
+      queryExec = queryExec.sort({ createdAt: -1 }).limit(100);
     }
 
     const requests = await queryExec;

@@ -2,9 +2,12 @@ const mongoose = require('mongoose');
 
 // Auto-calculate expiry based on urgency
 const expiryMap = {
-  critical: 6 * 60 * 60 * 1000,   // 6 hours
-  urgent:   24 * 60 * 60 * 1000,  // 24 hours
-  planned:  7 * 24 * 60 * 60 * 1000, // 7 days
+  critical: 7 * 24 * 60 * 60 * 1000,   // 7 days
+  urgent:   14 * 24 * 60 * 60 * 1000,  // 14 days
+  planned:  30 * 24 * 60 * 60 * 1000,  // 30 days
+  // frontend aliases
+  high:     14 * 24 * 60 * 60 * 1000,
+  medium:   30 * 24 * 60 * 60 * 1000,
 };
 
 const matchedDonorSchema = new mongoose.Schema(
@@ -46,8 +49,9 @@ const bloodRequestSchema = new mongoose.Schema(
     unitsFulfilled: { type: Number, default: 0 },
     urgency: {
       type: String,
-      enum: ['critical', 'urgent', 'planned'],
+      enum: ['critical', 'urgent', 'planned', 'Critical', 'High', 'Medium', 'high', 'medium'],
       default: 'urgent',
+      lowercase: true,
     },
     hospital: {
       name: { type: String, required: true, trim: true },
@@ -69,7 +73,7 @@ const bloodRequestSchema = new mongoose.Schema(
     requiredDate: { type: Date, default: null },
     status: {
       type: String,
-      enum: ['open', 'fulfilled', 'expired', 'cancelled'],
+      enum: ['open', 'fulfilled', 'expired', 'cancelled', 'Active', 'active'],
       default: 'open',
     },
     matchedDonors: [matchedDonorSchema],
