@@ -17,12 +17,14 @@ const generateTokens = (userId) => {
 const register = async (req, res, next) => {
   try {
     const { name, phone, email, password, role, bloodGroup, city, location, ...rest } = req.body;
+    const cleanEmail = email ? String(email).trim().toLowerCase() : '';
+    const cleanPhone = phone ? String(phone).trim() : '';
 
-    const existingUser = await User.findOne({ $or: [{ email }, { phone }] });
+    const existingUser = await User.findOne({ $or: [{ email: cleanEmail }, { phone: cleanPhone }] });
     if (existingUser) {
       return res.status(409).json({
         success: false,
-        message: existingUser.email === email ? 'Email already registered' : 'Phone number already registered',
+        message: existingUser.email === cleanEmail ? 'Email already registered' : 'Phone number already registered',
       });
     }
 
@@ -107,7 +109,13 @@ const login = async (req, res, next) => {
   try {
     const { email, password, fcmToken } = req.body;
 
-    const user = await User.findOne({ email }).select('+password');
+    if (!email || !password) {
+      return res.status(400).json({ success: false, message: 'Email and password are required' });
+    }
+
+    const cleanEmail = String(email).trim().toLowerCase();
+
+    const user = await User.findOne({ email: cleanEmail }).select('+password');
     if (!user) {
       return res.status(401).json({ success: false, message: 'Invalid email or password' });
     }
