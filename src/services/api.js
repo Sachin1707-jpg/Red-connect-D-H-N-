@@ -1,8 +1,18 @@
 import axios from 'axios';
 
+const getFormattedBaseUrl = (url) => {
+  const defaultUrl = 'https://red-connect-backend.onrender.com/api';
+  if (!url) return defaultUrl;
+  let cleanUrl = String(url).trim().replace(/\/$/, '');
+  if (!cleanUrl.endsWith('/api')) {
+    cleanUrl += '/api';
+  }
+  return cleanUrl;
+};
+
 // Base Axios instance
 export const api = axios.create({
-  baseURL: import.meta.env.VITE_API_BASE_URL || 'https://red-connect-backend.onrender.com/api',
+  baseURL: getFormattedBaseUrl(import.meta.env.VITE_API_BASE_URL),
   headers: {
     'Content-Type': 'application/json',
   },
