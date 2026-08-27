@@ -15,4 +15,13 @@ export const donorService = {
     const res = await api.get(`/donors/${id}`);
     return res.data.data;
   },
+
+  notifyDonor: async (donorId, requestId, payload = {}) => {
+    const res = await api.post(`/donors/${donorId}/notify`, {
+      requestId,
+      ...payload,
+    });
+    return res.data;
+  },
 };
+

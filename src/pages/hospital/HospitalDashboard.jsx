@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 import { motion } from 'framer-motion';
 import { Building2, Droplets, Siren, Users, HeartHandshake, Plus, AlertCircle, Phone, CheckCircle, FileText } from 'lucide-react';
@@ -10,11 +10,16 @@ import { Badge } from '../../components/common/Badge';
 import { BloodDistributionWidget } from '../../components/widgets/BloodDistributionWidget';
 import { DonationTrendWidget } from '../../components/widgets/DonationTrendWidget';
 import CreateRequestModal from '../requests/CreateRequestModal';
+import { fetchRequests } from '../../redux/requestSlice';
 
 const HospitalDashboard = () => {
   const dispatch = useDispatch();
   const { inventory, donorResponses, emergencyCases } = useSelector((s) => s.hospital);
   const [showCreateModal, setShowCreateModal] = useState(false);
+
+  useEffect(() => {
+    dispatch(fetchRequests());
+  }, [dispatch]);
 
   const totalInventoryUnits = Object.values(inventory).reduce((a, b) => a + b, 0);
 

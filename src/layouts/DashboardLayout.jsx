@@ -3,7 +3,6 @@ import { Outlet, Navigate } from 'react-router-dom';
 import { useSelector } from 'react-redux';
 import { Navbar } from '../components/layout/Navbar';
 import { Sidebar } from '../components/layout/Sidebar';
-import { FloatingEmergencyButton } from '../components/ui/FloatingEmergencyButton';
 import { BackToTop } from '../components/ui/BackToTop';
 import { CommandPalette } from '../components/ui/CommandPalette';
 import { Breadcrumb } from '../components/ui/Breadcrumb';
@@ -32,7 +31,6 @@ export const DashboardLayout = () => {
 
       <FirstVisitWelcomeModal />
       <EmergencyNotificationBanner />
-      <FloatingEmergencyButton />
       <BackToTop />
       <CommandPalette />
       <Toaster position="top-right" toastOptions={{

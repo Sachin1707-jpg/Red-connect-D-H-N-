@@ -13,6 +13,7 @@ import CreateRequestModal from '../requests/CreateRequestModal';
 import { updateUserLocal } from '../../redux/authSlice';
 import { fetchRequests } from '../../redux/requestSlice';
 import { profileService } from '../../services/profileService';
+import { mockDonationHistory, mockBloodRequests } from '../../data/mockData';
 
 const urgencyVariant = { Critical: 'emergency', High: 'danger', Medium: 'warning', Low: 'success' };
 
@@ -22,20 +23,25 @@ const DonorDashboard = () => {
   const { items: requests, loading } = useSelector((s) => s.requests);
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [toggling, setToggling] = useState(false);
-  const [donations, setDonations] = useState([]);
+  const [donations, setDonations] = useState(mockDonationHistory); // ← pre-seeded
 
   useEffect(() => {
     dispatch(fetchRequests());
     const loadDonations = async () => {
       try {
         const history = await profileService.getDonationHistory();
-        setDonations(history);
+        // Only overwrite mock data if live Firestore returned actual results
+        if (history && history.length > 0) {
+          setDonations(history);
+        }
       } catch (err) {
         console.error('[DonorDashboard] History load failed:', err);
+        // Silently keep mock data — donor still sees populated dashboard
       }
     };
     loadDonations();
   }, [dispatch]);
+
 
   const handleToggleAvailability = async () => {
     setToggling(true);

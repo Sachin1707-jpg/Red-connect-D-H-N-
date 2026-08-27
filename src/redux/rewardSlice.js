@@ -13,8 +13,17 @@ export const fetchLeaderboard = createAsyncThunk('rewards/fetchLeaderboard', asy
   return await rewardService.getLeaderboard();
 });
 
-export const redeemVoucher = createAsyncThunk('rewards/redeem', async (id) => {
-  return await rewardService.redeemReward(id);
+export const fetchUserPoints = createAsyncThunk('rewards/fetchUserPoints', async () => {
+  return await rewardService.getUserPoints();
+});
+
+export const redeemVoucher = createAsyncThunk('rewards/redeem', async ({ id, pointsCost }) => {
+  return await rewardService.redeemReward(id, pointsCost);
+});
+
+export const awardPoints = createAsyncThunk('rewards/addPoints', async (pointsToAdd) => {
+  await rewardService.addPoints(pointsToAdd);
+  return pointsToAdd;
 });
 
 const rewardSlice = createSlice({
@@ -24,30 +33,55 @@ const rewardSlice = createSlice({
     badges: [],
     leaderboard: [],
     pointsBalance: 0,
+    redeemedCode: null,
     loading: false,
     error: null,
   },
-  reducers: {},
+
+  reducers: {
+    setPointsBalance: (state, action) => {
+      state.pointsBalance = action.payload;
+    },
+    addPointsLocal: (state, action) => {
+      state.pointsBalance = Math.max(0, state.pointsBalance + action.payload);
+    },
+    clearRedeemedCode: (state) => {
+      state.redeemedCode = null;
+    },
+  },
+
   extraReducers: (builder) => {
     builder
-      .addCase(fetchRewards.pending, (state) => {
-        state.loading = true;
-      })
+      .addCase(fetchRewards.pending, (state) => { state.loading = true; })
       .addCase(fetchRewards.fulfilled, (state, action) => {
         state.loading = false;
         state.vouchers = action.payload;
       })
+      .addCase(fetchRewards.rejected, (state) => { state.loading = false; })
+
       .addCase(fetchBadges.fulfilled, (state, action) => {
         state.badges = action.payload;
       })
+
       .addCase(fetchLeaderboard.fulfilled, (state, action) => {
         state.leaderboard = action.payload;
       })
+
+      .addCase(fetchUserPoints.fulfilled, (state, action) => {
+        state.pointsBalance = action.payload;
+      })
+
       .addCase(redeemVoucher.fulfilled, (state, action) => {
-        const cost = action.payload.reward.pointsCost || action.payload.reward.points || 0;
+        const cost = action.payload?.reward?.pointsCost || 0;
         state.pointsBalance = Math.max(0, state.pointsBalance - cost);
+        state.redeemedCode = action.payload?.reward?.code || null;
+      })
+
+      .addCase(awardPoints.fulfilled, (state, action) => {
+        state.pointsBalance = state.pointsBalance + action.payload;
       });
   },
 });
 
+export const { setPointsBalance, addPointsLocal, clearRedeemedCode } = rewardSlice.actions;
 export default rewardSlice.reducer;

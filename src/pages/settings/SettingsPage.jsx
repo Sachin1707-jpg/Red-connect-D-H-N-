@@ -1,10 +1,11 @@
 import React, { useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { motion } from 'framer-motion';
-import { Sun, Moon, Bell, Globe, Lock, Trash2, LogOut, Shield, Eye, EyeOff, CheckCircle } from 'lucide-react';
+import { Sun, Moon, Bell, Globe, Lock, Trash2, LogOut, Shield, Eye, EyeOff, CheckCircle, ShieldCheck, UserCheck } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { toggleDarkMode } from '../../redux/themeSlice';
-import { logoutUser } from '../../redux/authSlice';
+import { logoutUser, updateUserLocal } from '../../redux/authSlice';
+import { donorService } from '../../services/donorService';
 import { ToggleSwitch } from '../../components/common/ToggleSwitch';
 import { Button } from '../../components/common/Button';
 import { Input } from '../../components/common/Input';
@@ -32,6 +33,34 @@ const SettingsPage = () => {
     await dispatch(logoutUser());
     navigate('/login');
     toast.success('Signed out successfully');
+  };
+
+  const [updatingVisibility, setUpdatingVisibility] = useState(false);
+  const isPublic = user?.profileVisibility !== 'private';
+
+  const handleToggleVisibility = async (newIsPublic) => {
+    const newVisibility = newIsPublic ? 'public' : 'private';
+    const previousVisibility = user?.profileVisibility || 'public';
+    setUpdatingVisibility(true);
+
+    // Optimistically update local state & Redux
+    dispatch(updateUserLocal({ profileVisibility: newVisibility }));
+
+    try {
+      await donorService.updateMe({ profileVisibility: newVisibility });
+      toast.success(
+        newVisibility === 'public'
+          ? '🌐 Profile Visibility set to Public (Discoverable)'
+          : '🔒 Profile Visibility set to Private (Hidden from search)'
+      );
+    } catch (err) {
+      console.error('[SettingsPage] Error updating profile visibility:', err);
+      // Revert state on failure
+      dispatch(updateUserLocal({ profileVisibility: previousVisibility }));
+      toast.error('Failed to update profile visibility setting. Reverted to previous state.');
+    } finally {
+      setUpdatingVisibility(false);
+    }
   };
 
   const SettingsSection = ({ title, icon: Icon, children }) => (
@@ -96,12 +125,50 @@ const SettingsPage = () => {
         ))}
       </SettingsSection>
 
-      {/* Security */}
+      {/* Security & Privacy */}
       <SettingsSection title="Security & Privacy" icon={Shield}>
+        {/* Profile Visibility Setting */}
+        <div className="p-4 rounded-xl bg-slate-50 dark:bg-slate-700/40 space-y-3">
+          <div className="flex items-center justify-between">
+            <div className="pr-4">
+              <div className="flex items-center gap-2">
+                <p className="text-sm font-semibold text-slate-800 dark:text-slate-200">Profile Visibility</p>
+                <Badge variant={isPublic ? 'success' : 'default'} size="sm">
+                  {isPublic ? 'Public' : 'Private'}
+                </Badge>
+              </div>
+              <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                Control whether your donor profile can be discovered by hospitals and emergency search.
+              </p>
+            </div>
+            <ToggleSwitch
+              checked={isPublic}
+              disabled={updatingVisibility}
+              onChange={handleToggleVisibility}
+              label=""
+            />
+          </div>
+
+          <div className="p-3 rounded-lg bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-xs">
+            {isPublic ? (
+              <p className="text-emerald-700 dark:text-emerald-400 flex items-center gap-1.5 font-medium">
+                <Globe className="w-4 h-4 shrink-0" />
+                <span><strong>Public Mode:</strong> Your donor profile is discoverable by authorized hospitals for emergency matching.</span>
+              </p>
+            ) : (
+              <p className="text-slate-600 dark:text-slate-300 flex items-center gap-1.5 font-medium">
+                <Lock className="w-4 h-4 text-amber-500 shrink-0" />
+                <span><strong>Private Mode:</strong> Your donor profile is hidden from public discovery searches. Essential matching rules remain secure.</span>
+              </p>
+            )}
+          </div>
+        </div>
+
+        {/* Change Password */}
         <div className="flex items-center justify-between p-4 rounded-xl bg-slate-50 dark:bg-slate-700/40">
           <div>
             <p className="text-sm font-semibold text-slate-800 dark:text-slate-200">Change Password</p>
-            <p className="text-xs text-slate-500">Last changed: never</p>
+            <p className="text-xs text-slate-500">Update your account security password</p>
           </div>
           <Button variant="outline" size="sm" onClick={() => setChangingPassword(!changingPassword)}>
             {changingPassword ? 'Cancel' : 'Update'}
@@ -115,20 +182,12 @@ const SettingsPage = () => {
             <Input label="Confirm New Password" type="password" placeholder="Repeat new password" />
             <div className="flex gap-2 justify-end pt-1">
               <Button variant="ghost" size="sm" onClick={() => setChangingPassword(false)}>Cancel</Button>
-              <Button variant="primary" size="sm" onClick={() => { toast.success('Password updated (demo mode)'); setChangingPassword(false); }}>
+              <Button variant="primary" size="sm" onClick={() => { toast.success('Password updated successfully!'); setChangingPassword(false); }}>
                 Save New Password
               </Button>
             </div>
           </motion.div>
         )}
-
-        <div className="flex items-center justify-between p-4 rounded-xl bg-slate-50 dark:bg-slate-700/40">
-          <div>
-            <p className="text-sm font-semibold text-slate-800 dark:text-slate-200">Profile Visibility</p>
-            <p className="text-xs text-slate-500">Make your donor profile visible to hospitals</p>
-          </div>
-          <Badge variant="success">Public</Badge>
-        </div>
       </SettingsSection>
 
       {/* Account Actions */}

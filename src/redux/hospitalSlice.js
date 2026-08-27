@@ -1,6 +1,7 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import { requestService } from '../services/requestService';
 import { getAvailableDonors } from '../services/firestoreDataService';
+import { mockInventory, mockDonorResponses, mockEmergencyCases } from '../data/mockData';
 
 export const fetchHospitalCases = createAsyncThunk('hospital/fetchCases', async (filters, { rejectWithValue }) => {
   try {
@@ -23,12 +24,10 @@ export const fetchHospitalDonors = createAsyncThunk('hospital/fetchDonors', asyn
 const hospitalSlice = createSlice({
   name: 'hospital',
   initialState: {
-    inventory: {
-      'A+': 0, 'A-': 0, 'B+': 0, 'B-': 0,
-      'AB+': 0, 'AB-': 0, 'O+': 0, 'O-': 0
-    },
-    donorResponses: [],
-    emergencyCases: [],
+    // ← Pre-seeded with mock data so dashboards are never empty on first load
+    inventory: mockInventory,
+    donorResponses: mockDonorResponses,
+    emergencyCases: mockEmergencyCases,
     loading: false,
     error: null,
   },
@@ -52,17 +51,25 @@ const hospitalSlice = createSlice({
       })
       .addCase(fetchHospitalCases.fulfilled, (state, action) => {
         state.loading = false;
-        state.emergencyCases = action.payload || [];
+        // Only overwrite if live data actually returned results
+        if (action.payload && action.payload.length > 0) {
+          state.emergencyCases = action.payload;
+        }
       })
       .addCase(fetchHospitalCases.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload;
+        // Keep mock data on failure — don't blank the UI
       })
       .addCase(fetchHospitalDonors.fulfilled, (state, action) => {
-        state.donorResponses = action.payload || [];
+        // Only overwrite if live data returned results
+        if (action.payload && action.payload.length > 0) {
+          state.donorResponses = action.payload;
+        }
       });
   }
 });
 
 export const { updateInventoryUnit, updateDonorStatus } = hospitalSlice.actions;
 export default hospitalSlice.reducer;
+

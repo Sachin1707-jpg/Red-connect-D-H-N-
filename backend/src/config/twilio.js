@@ -3,7 +3,7 @@ let twilioClient = null;
 const getTwilioClient = () => {
   if (twilioClient) return twilioClient;
 
-  const sid = process.env.TWILIO_SID;
+  const sid = process.env.TWILIO_ACCOUNT_SID || process.env.TWILIO_SID;
   const token = process.env.TWILIO_AUTH_TOKEN;
 
   if (!sid || !token) {
@@ -14,7 +14,7 @@ const getTwilioClient = () => {
   try {
     const twilio = require('twilio');
     twilioClient = twilio(sid, token);
-    console.log('[Twilio] Client initialized');
+    console.log('[Twilio] Client initialized successfully');
     return twilioClient;
   } catch (err) {
     console.warn('[Twilio] Init failed:', err.message);
@@ -23,3 +23,4 @@ const getTwilioClient = () => {
 };
 
 module.exports = { getTwilioClient };
+

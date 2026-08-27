@@ -2,26 +2,30 @@ import React from 'react';
 import L from 'leaflet';
 import { Marker, Popup } from 'react-leaflet';
 
-// Custom blue SVG icon for hospitals
-const hospitalIconSvg = `
-  <svg xmlns="http://www.w3.org/2000/svg" width="36" height="44" viewBox="0 0 36 44">
-    <filter id="shadow" x="-50%" y="-50%" width="200%" height="200%">
-      <feDropShadow dx="0" dy="2" stdDeviation="2" flood-color="#2563EB" flood-opacity="0.4"/>
-    </filter>
-    <path filter="url(#shadow)"
-      d="M18 2 C9.163 2 2 9.163 2 18 C2 29 18 42 18 42 C18 42 34 29 34 18 C34 9.163 26.837 2 18 2Z"
-      fill="#2563EB"
-    />
-    <text x="18" y="23" text-anchor="middle" font-size="15" fill="white" font-family="Arial">🏥</text>
-  </svg>
-`;
-
+// Blue circular icon for verified hospitals matching reference design
 const hospitalIcon = L.divIcon({
-  html: hospitalIconSvg,
+  html: `
+    <div style="
+      width: 30px;
+      height: 30px;
+      background: #3B82F6;
+      border: 2.5px solid #FFFFFF;
+      border-radius: 50%;
+      box-shadow: 0 3px 10px rgba(0,0,0,0.35);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    ">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+        <rect x="3" y="3" width="18" height="18" rx="3" ry="3" fill="#3B82F6" stroke="white" stroke-width="2" />
+        <path d="M12 7v10M7 12h10" stroke="white" stroke-width="2.5" stroke-linecap="round" />
+      </svg>
+    </div>
+  `,
   className: '',
-  iconSize: [36, 44],
-  iconAnchor: [18, 44],
-  popupAnchor: [0, -44],
+  iconSize: [30, 30],
+  iconAnchor: [15, 15],
+  popupAnchor: [0, -15],
 });
 
 /**

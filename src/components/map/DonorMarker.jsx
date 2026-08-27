@@ -2,27 +2,30 @@ import React from 'react';
 import L from 'leaflet';
 import { Marker, Popup } from 'react-leaflet';
 
-// Custom green SVG icon for available donors, grey for unavailable
-const donorIconSvg = (available) => `
-  <svg xmlns="http://www.w3.org/2000/svg" width="36" height="44" viewBox="0 0 36 44">
-    <filter id="shadow" x="-50%" y="-50%" width="200%" height="200%">
-      <feDropShadow dx="0" dy="2" stdDeviation="2" flood-color="${available ? '#059669' : '#94a3b8'}" flood-opacity="0.4"/>
-    </filter>
-    <path filter="url(#shadow)"
-      d="M18 2 C9.163 2 2 9.163 2 18 C2 29 18 42 18 42 C18 42 34 29 34 18 C34 9.163 26.837 2 18 2Z"
-      fill="${available ? '#059669' : '#94a3b8'}"
-    />
-    <text x="18" y="22" text-anchor="middle" font-size="14" fill="white" font-family="Arial">👤</text>
-  </svg>
-`;
-
+// Teal circular icon for available donors matching reference design
 const createDonorIcon = (available) =>
   L.divIcon({
-    html: donorIconSvg(available),
+    html: `
+      <div style="
+        width: 30px;
+        height: 30px;
+        background: ${available ? '#10B981' : '#94A3B8'};
+        border: 2.5px solid #FFFFFF;
+        border-radius: 50%;
+        box-shadow: 0 3px 10px rgba(0,0,0,0.35);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      ">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="white" stroke="white" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M12 22a7 7 0 0 0 7-7c0-2-1-3.9-3-5.5s-3.5-4-4-6.5c-.5 2.5-2 4.9-4 6.5C6 11.1 5 13 5 15a7 7 0 0 0 7 7z"></path>
+        </svg>
+      </div>
+    `,
     className: '',
-    iconSize: [36, 44],
-    iconAnchor: [18, 44],
-    popupAnchor: [0, -44],
+    iconSize: [30, 30],
+    iconAnchor: [15, 15],
+    popupAnchor: [0, -15],
   });
 
 /**

@@ -58,6 +58,7 @@ const userSchema = new mongoose.Schema(
 
     // ── Availability & Donation ───────────────────────────────────────────────
     isAvailable: { type: Boolean, default: true },
+    profileVisibility: { type: String, enum: ['public', 'private'], default: 'public' },
     lastDonationDate: { type: Date, default: null },
     donationCount: { type: Number, default: 0 },
     livesSaved: { type: Number, default: 0 },

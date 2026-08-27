@@ -38,11 +38,12 @@ const HospitalInventory      = lazy(() => import('../pages/hospital/HospitalInve
 const DonorResponses         = lazy(() => import('../pages/hospital/DonorResponses'));
 const HospitalEmergencyCases = lazy(() => import('../pages/hospital/HospitalEmergencyCases'));
 const HospitalProfile        = lazy(() => import('../pages/hospital/HospitalProfile'));
+const DonorMatchingPage      = lazy(() => import('../pages/hospital/DonorMatchingPage'));
 
 const NgoDashboard           = lazy(() => import('../pages/ngo/NgoDashboard'));
 const DonationCampManagement = lazy(() => import('../pages/ngo/DonationCampManagement'));
 const VolunteerManagement    = lazy(() => import('../pages/ngo/VolunteerManagement'));
-const BloodShortageMonitor   = lazy(() => import('../pages/ngo/BloodShortageMonitor'));
+const NgoNotificationCenter  = lazy(() => import('../pages/ngo/NgoNotificationCenter'));
 
 const AdminDashboard         = lazy(() => import('../pages/admin/AdminDashboard'));
 const UserManagement         = lazy(() => import('../pages/admin/UserManagement'));
@@ -55,7 +56,6 @@ const AuditLogsPage          = lazy(() => import('../pages/admin/AuditLogsPage')
 const InteractiveMapsPage   = lazy(() => import('../pages/maps/InteractiveMapsPage'));
 const AdvancedAnalyticsPage = lazy(() => import('../pages/analytics/AdvancedAnalyticsPage'));
 const CalendarPage          = lazy(() => import('../pages/calendar/CalendarPage'));
-const ChatPage              = lazy(() => import('../pages/chat/ChatPage'));
 const CallPage              = lazy(() => import('../pages/call/CallPage'));
 const ReportCenterPage      = lazy(() => import('../pages/reports/ReportCenterPage'));
 const UserDetailsPage       = lazy(() => import('../pages/users/UserDetailsPage'));
@@ -137,18 +137,19 @@ const router = createBrowserRouter([
           { path: 'settings',           element: W(SettingsPage) },
 
           // Hospital
-          { path: 'hospital/dashboard', element: W(HospitalDashboard) },
-          { path: 'hospital/create-request', element: W(CreateBloodRequestPage) },
-          { path: 'hospital/inventory', element: W(HospitalInventory) },
-          { path: 'hospital/donors',    element: W(DonorResponses) },
-          { path: 'hospital/emergency', element: W(HospitalEmergencyCases) },
-          { path: 'hospital/profile',   element: W(HospitalProfile) },
+          { path: 'hospital/dashboard',        element: W(HospitalDashboard) },
+          { path: 'hospital/create-request',    element: W(CreateBloodRequestPage) },
+          { path: 'hospital/inventory',         element: W(HospitalInventory) },
+          { path: 'hospital/donors',            element: W(DonorResponses) },
+          { path: 'hospital/emergency',         element: W(HospitalEmergencyCases) },
+          { path: 'hospital/profile',           element: W(HospitalProfile) },
+          { path: 'hospital/donor-matching',    element: W(DonorMatchingPage) },
 
           // NGO
-          { path: 'ngo/dashboard',  element: W(NgoDashboard) },
-          { path: 'ngo/camps',      element: W(DonationCampManagement) },
-          { path: 'ngo/volunteers', element: W(VolunteerManagement) },
-          { path: 'ngo/shortages',  element: W(BloodShortageMonitor) },
+          { path: 'ngo/dashboard',     element: W(NgoDashboard) },
+          { path: 'ngo/camps',         element: W(DonationCampManagement) },
+          { path: 'ngo/volunteers',    element: W(VolunteerManagement) },
+          { path: 'ngo/notifications', element: W(NgoNotificationCenter) },
 
           // Admin
           { path: 'admin/dashboard', element: W(AdminDashboard) },
@@ -162,7 +163,6 @@ const router = createBrowserRouter([
           { path: 'maps',            element: W(InteractiveMapsPage) },
           { path: 'analytics',       element: W(AdvancedAnalyticsPage) },
           { path: 'calendar',        element: W(CalendarPage) },
-          { path: 'chat',            element: W(ChatPage) },
           { path: 'call',            element: W(CallPage) },
           { path: 'reports',         element: W(ReportCenterPage) },
           { path: 'users/:id',       element: W(UserDetailsPage) },

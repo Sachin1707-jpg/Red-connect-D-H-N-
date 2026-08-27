@@ -5,7 +5,7 @@ import {
   LayoutDashboard, MapPin, Droplets, History, Award,
   Bell, User, Settings, LogOut, ChevronLeft, ChevronRight,
   Heart, Building2, HeartHandshake, ShieldCheck, BarChart3, Map,
-  X, Calendar, MessageSquare, FileText
+  X, Calendar, MessageSquare, FileText, Sparkles
 } from 'lucide-react';
 import { toggleSidebar } from '../../redux/themeSlice';
 import { logoutUser } from '../../redux/authSlice';
@@ -30,32 +30,27 @@ export const Sidebar = () => {
 
     if (role === 'hospital') {
       return [
-        { label: 'Hospital Dashboard',  to: '/hospital/dashboard', icon: Building2 },
-        { label: 'Blood Inventory',     to: '/hospital/inventory', icon: Droplets },
-        { label: 'Donor Responses',     to: '/hospital/donors',    icon: User },
-        { label: 'Emergency Cases',     to: '/hospital/emergency', icon: Droplets },
-        { label: 'Blood Requests',      to: '/requests', icon: Droplets },
-        { label: 'Maps',                to: '/maps',               icon: Map },
-        { label: 'Analytics',           to: '/analytics',          icon: BarChart3 },
-        { label: 'Calendar',            to: '/calendar',           icon: Calendar },
-        { label: 'Chat',                to: '/chat',               icon: MessageSquare },
-        { label: 'Reports',             to: '/reports',            icon: FileText },
-        { label: 'Notifications',       to: '/notifications',      icon: Bell },
-        { label: 'Settings',            to: '/settings',           icon: Settings },
+        { label: 'Hospital Dashboard',  to: '/hospital/dashboard',      icon: Building2 },
+        { label: 'Donor Matching',       to: '/hospital/donor-matching',  icon: Sparkles },
+        { label: 'Blood Inventory',     to: '/hospital/inventory',       icon: Droplets },
+        { label: 'Donor Responses',     to: '/hospital/donors',          icon: User },
+        { label: 'Emergency Cases',     to: '/hospital/emergency',       icon: Droplets },
+        { label: 'Blood Requests',      to: '/requests',                 icon: Droplets },
+        { label: 'Maps',                to: '/maps',                     icon: Map },
+        { label: 'Analytics',           to: '/analytics',                icon: BarChart3 },
+        { label: 'Calendar',            to: '/calendar',                 icon: Calendar },
+        { label: 'Reports',             to: '/reports',                  icon: FileText },
+        { label: 'Notifications',       to: '/notifications',            icon: Bell },
+        { label: 'Settings',            to: '/settings',                 icon: Settings },
       ];
     }
 
     if (role === 'ngo') {
       return [
         { label: 'NGO Dashboard',       to: '/ngo/dashboard',      icon: HeartHandshake },
-        { label: 'Donation Camps',      to: '/ngo/camps',          icon: HeartHandshake },
+        { label: 'Donation Camps',      to: '/ngo/camps',          icon: Calendar },
         { label: 'Volunteers',          to: '/ngo/volunteers',     icon: User },
-        { label: 'Shortage Monitor',    to: '/ngo/shortages',      icon: Droplets },
-        { label: 'Blood Requests',      to: '/requests', icon: Droplets },
-        { label: 'Maps',                to: '/maps',               icon: Map },
-        { label: 'Calendar',            to: '/calendar',           icon: Calendar },
-        { label: 'Chat',                to: '/chat',               icon: MessageSquare },
-        { label: 'Notifications',       to: '/notifications',      icon: Bell },
+        { label: 'Notifications',       to: '/ngo/notifications',  icon: Bell },
         { label: 'Settings',            to: '/settings',           icon: Settings },
       ];
     }
@@ -71,7 +66,6 @@ export const Sidebar = () => {
         { label: 'Analytics',           to: '/analytics',          icon: BarChart3 },
         { label: 'Reports',             to: '/reports',            icon: FileText },
         { label: 'Maps',                to: '/maps',               icon: Map },
-        { label: 'Chat',                to: '/chat',               icon: MessageSquare },
         { label: 'Notifications',       to: '/notifications',      icon: Bell },
         { label: 'Settings',            to: '/settings',           icon: Settings },
       ];
@@ -88,7 +82,6 @@ export const Sidebar = () => {
       { label: 'Donation History',    to: '/history',             icon: History },
       { label: 'Rewards',             to: '/rewards',             icon: Award },
       { label: 'Calendar',            to: '/calendar',            icon: Calendar },
-      { label: 'Chat',                to: '/chat',                icon: MessageSquare },
       { label: 'Notifications',       to: '/notifications',       icon: Bell },
       { label: 'Profile',             to: '/profile',             icon: User },
       { label: 'Settings',            to: '/settings',            icon: Settings },

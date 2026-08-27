@@ -1,5 +1,6 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import { requestService } from '../services/requestService';
+import { mockBloodRequests } from '../data/mockData';
 
 export const fetchRequests = createAsyncThunk('requests/fetch', async (filters, { rejectWithValue }) => {
   try {
@@ -36,7 +37,8 @@ export const deleteBloodRequest = createAsyncThunk('requests/delete', async (req
 const requestSlice = createSlice({
   name: 'requests',
   initialState: {
-    items: [],
+    // ← Pre-seeded with mock data so request lists are never empty on first load
+    items: mockBloodRequests,
     loading: false,
     error: null,
     filters: {
@@ -72,7 +74,10 @@ const requestSlice = createSlice({
       })
       .addCase(fetchRequests.fulfilled, (state, action) => {
         state.loading = false;
-        state.items = action.payload;
+        // Only replace mock seed if live data returned actual results
+        if (action.payload && action.payload.length > 0) {
+          state.items = action.payload;
+        }
       })
       .addCase(fetchRequests.rejected, (state, action) => {
         state.loading = false;

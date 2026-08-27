@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Heart, MapPin, Clock, Phone, AlertTriangle, CheckCircle2, Plus, Filter, RefreshCw } from 'lucide-react';
+import { Heart, MapPin, Clock, Phone, AlertTriangle, CheckCircle2, Plus, Filter, RefreshCw, List, LayoutGrid } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { fetchRequests, pledgeBloodRequest, setFilterBloodGroup, setFilterUrgency, setSearchQuery, setCurrentPage } from '../../redux/requestSlice';
 import { Badge } from '../../components/common/Badge';
@@ -12,11 +12,12 @@ import { Pagination } from '../../components/common/Pagination';
 import { EmptyState } from '../../components/common/EmptyState';
 import { CardSkeleton } from '../../components/common/Skeleton';
 import { Modal } from '../../components/common/Modal';
+import { Table } from '../../components/common/Table';
 import CreateRequestModal from './CreateRequestModal';
 
 const BLOOD_GROUPS = ['ALL', 'A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-'];
 const URGENCIES = ['ALL', 'Critical', 'High', 'Medium'];
-const ITEMS_PER_PAGE = 6;
+const ITEMS_PER_PAGE = 8;
 
 const urgencyVariant = { Critical: 'emergency', High: 'danger', Medium: 'warning' };
 const urgencyIcon = { Critical: '🚨', High: '🔴', Medium: '🟡' };
@@ -27,6 +28,7 @@ const EmergencyRequestsPage = () => {
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [selectedRequest, setSelectedRequest] = useState(null);
   const [pledging, setPledging] = useState(null);
+  const [viewMode, setViewMode] = useState('list'); // Default to 'list' view
 
   useEffect(() => {
     dispatch(fetchRequests());
@@ -59,6 +61,101 @@ const EmergencyRequestsPage = () => {
     }
   };
 
+  const columns = [
+    {
+      key: 'bloodGroup',
+      header: 'Blood Group',
+      render: (req) => (
+        <div className="w-11 h-11 rounded-xl bg-gradient-to-br from-red-600 to-rose-500 flex items-center justify-center font-black text-white text-base shadow-sm">
+          {req.bloodGroup}
+        </div>
+      ),
+    },
+    {
+      key: 'hospitalName',
+      header: 'Hospital & Patient',
+      render: (req) => (
+        <div>
+          <p className="font-bold text-slate-900 dark:text-white text-sm">{req.hospitalName}</p>
+          <p className="text-xs text-slate-500 dark:text-slate-400">{req.patientName}</p>
+        </div>
+      ),
+    },
+    {
+      key: 'urgency',
+      header: 'Urgency & Status',
+      render: (req) => (
+        <div className="flex items-center gap-1.5 flex-wrap">
+          <Badge variant={urgencyVariant[req.urgency] || 'default'} size="sm" pulse={req.urgency === 'Critical'}>
+            {urgencyIcon[req.urgency]} {req.urgency}
+          </Badge>
+          <Badge variant={req.status === 'Fulfilled' ? 'success' : 'info'} size="sm">
+            {req.status}
+          </Badge>
+        </div>
+      ),
+    },
+    {
+      key: 'location',
+      header: 'Location & Distance',
+      render: (req) => (
+        <div className="text-xs text-slate-600 dark:text-slate-300">
+          <p className="font-medium flex items-center gap-1"><MapPin className="w-3.5 h-3.5 text-red-400" /> {req.distanceKm} km</p>
+          <p className="text-[11px] text-slate-400 truncate max-w-[180px]">{req.location}</p>
+        </div>
+      ),
+    },
+    {
+      key: 'unitsPledged',
+      header: 'Units Pledged',
+      render: (req) => (
+        <div className="w-36">
+          <div className="flex justify-between text-xs text-slate-600 dark:text-slate-300 font-semibold mb-1">
+            <span>{req.unitsPledged} / {req.unitsRequired} units</span>
+            <span className="text-emerald-500">{Math.round(((req.unitsPledged || 0) / (req.unitsRequired || 1)) * 100)}%</span>
+          </div>
+          <div className="h-1.5 bg-slate-100 dark:bg-slate-700 rounded-full overflow-hidden">
+            <div
+              className="h-full bg-gradient-to-r from-emerald-500 to-green-400 rounded-full"
+              style={{ width: `${Math.min(((req.unitsPledged || 0) / (req.unitsRequired || 1)) * 100, 100)}%` }}
+            />
+          </div>
+        </div>
+      ),
+    },
+    {
+      key: 'requiredDate',
+      header: 'Required Date',
+      render: (req) => (
+        <span className="text-xs text-slate-600 dark:text-slate-300 font-medium flex items-center gap-1">
+          <Clock className="w-3.5 h-3.5 text-slate-400" /> {req.requiredDate}
+        </span>
+      ),
+    },
+    {
+      key: 'actions',
+      header: 'Actions',
+      render: (req) => (
+        <div className="flex items-center gap-2">
+          <Button variant="ghost" size="sm" className="text-xs px-2.5" onClick={() => setSelectedRequest(req)}>
+            Details
+          </Button>
+          <Button
+            variant={req.status === 'Fulfilled' ? 'success' : 'primary'}
+            size="sm"
+            className="text-xs px-2.5"
+            isDisabled={req.status === 'Fulfilled'}
+            isLoading={pledging === req.id}
+            leftIcon={<Heart className="w-3.5 h-3.5" />}
+            onClick={() => handlePledge(req.id)}
+          >
+            {req.status === 'Fulfilled' ? 'Fulfilled ✓' : 'Pledge'}
+          </Button>
+        </div>
+      ),
+    },
+  ];
+
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -70,6 +167,24 @@ const EmergencyRequestsPage = () => {
           </p>
         </div>
         <div className="flex items-center gap-2">
+          <div className="flex items-center bg-slate-100 dark:bg-slate-800 p-1 rounded-xl border border-slate-200 dark:border-slate-700">
+            <button
+              onClick={() => setViewMode('list')}
+              className={`flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-bold transition-all ${
+                viewMode === 'list' ? 'bg-red-600 text-white shadow-sm' : 'text-slate-600 dark:text-slate-300 hover:text-slate-900'
+              }`}
+            >
+              <List className="w-3.5 h-3.5" /> List View
+            </button>
+            <button
+              onClick={() => setViewMode('grid')}
+              className={`flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-bold transition-all ${
+                viewMode === 'grid' ? 'bg-red-600 text-white shadow-sm' : 'text-slate-600 dark:text-slate-300 hover:text-slate-900'
+              }`}
+            >
+              <LayoutGrid className="w-3.5 h-3.5" /> Grid View
+            </button>
+          </div>
           <Button variant="ghost" size="sm" leftIcon={<RefreshCw className="w-4 h-4" />} onClick={() => dispatch(fetchRequests())}>
             Refresh
           </Button>
@@ -120,7 +235,7 @@ const EmergencyRequestsPage = () => {
         </div>
       </div>
 
-      {/* Request Cards Grid */}
+      {/* Requests Display (List Table View or Cards Grid View) */}
       {loading ? (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {Array.from({ length: 6 }).map((_, i) => <CardSkeleton key={i} />)}
@@ -137,6 +252,10 @@ const EmergencyRequestsPage = () => {
             dispatch(setSearchQuery(''));
           }}
         />
+      ) : viewMode === 'list' ? (
+        <div className="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm p-6 overflow-hidden">
+          <Table columns={columns} data={paginated} />
+        </div>
       ) : (
         <AnimatePresence mode="wait">
           <motion.div

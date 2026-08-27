@@ -2,7 +2,6 @@ import React from 'react';
 import { Outlet } from 'react-router-dom';
 import { Navbar } from '../components/layout/Navbar';
 import { Footer } from '../components/layout/Footer';
-import { FloatingEmergencyButton } from '../components/ui/FloatingEmergencyButton';
 import { BackToTop } from '../components/ui/BackToTop';
 import { CommandPalette } from '../components/ui/CommandPalette';
 import { Toaster } from 'react-hot-toast';
@@ -14,7 +13,6 @@ export const PublicLayout = () => (
       <Outlet />
     </main>
     <Footer />
-    <FloatingEmergencyButton />
     <BackToTop />
     <CommandPalette />
     <Toaster position="top-right" toastOptions={{
