@@ -28,7 +28,11 @@ app.use(express.urlencoded({ extended: true }));
 // Global API rate limit
 app.use('/api', apiLimiter);
 
-// Health check
+// Root & Health check
+app.get('/', (req, res) => {
+  res.status(200).json({ status: 'OK', message: 'RedConnect API Server is Live & Ready' });
+});
+
 app.get('/health', (req, res) => {
   res.status(200).json({ status: 'OK', message: 'RedConnect API is running', timestamp: new Date() });
 });
