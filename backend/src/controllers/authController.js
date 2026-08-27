@@ -32,8 +32,8 @@ const register = async (req, res, next) => {
 
     const user = new User({
       name,
-      phone,
-      email,
+      phone: cleanPhone,
+      email: cleanEmail,
       password,
       role: role || 'donor',
       bloodGroup: bloodGroup || null,
